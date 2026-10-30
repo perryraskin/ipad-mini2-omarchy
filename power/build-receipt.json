@@ -1,0 +1,33 @@
+{
+  "kernel_release": "7.0.12-j86-suspend1",
+  "linux_commit": "dfa4d42081312dd34ec33ee8d23174309f683188",
+  "orchard_hardware_commit": "4f15a70b9c59687fe8cd72b6ea2fbb2823c54d92",
+  "arch": "arm64",
+  "page_size": 4096,
+  "build": "Image modules",
+  "result": "passed",
+  "boot_tested": false,
+  "activation": false,
+  "boot_payload_generated": false,
+  "suspend_resume_qualified": false,
+  "image_sha256": "e377e58be30922445243269ddbfbe8dbd711f46926b20f99ee869fde2f057442",
+  "config_sha256": "93da2e14a065fdd59960e98cf9cd5532d5eddd70fb8e0518f47ccc06d965f2ee",
+  "module_symvers_sha256": "9c74b8bf81b5789fdc6eb57eb9c4b2c7b2b928b25e7146f012d74d916cd07493",
+  "config": {
+    "SUSPEND": true,
+    "HIBERNATION": false,
+    "PM_AUTOSLEEP": false,
+    "CPU_IDLE": false
+  },
+  "dt_audit": {
+    "cpu_enable_method": "spin-table",
+    "psci_node": false,
+    "home_wakeup_source": true,
+    "power_wakeup_source": true
+  },
+  "limits": [
+    "No platform deep-resume implementation",
+    "No NBD-root suspend experiments",
+    "No device I/O performed"
+  ]
+}

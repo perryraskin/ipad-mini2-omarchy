@@ -40,3 +40,7 @@ Only after repeated recovery and measured power reduction should short Power
 press request suspend. Preserve the existing screen-only fallback and hold menu.
 
 All physical steps live in [HANDS-ON-QUEUE.md](../HANDS-ON-QUEUE.md).
+
+## Host build result
+
+The separate ARM64 Image and all configured modules built successfully as `7.0.12-j86-suspend1`. [build-receipt.json](build-receipt.json) records artifact/config hashes and the unchanged DT wake audit. No RAM payload was generated and no device boot or suspend test occurred.
