@@ -1,0 +1,293 @@
+diff --git a/include/input/touch.h b/include/input/touch.h
+index 27e6a26..1422bd9 100644
+--- a/include/input/touch.h
++++ b/include/input/touch.h
+@@ -2,8 +2,12 @@
+ #ifndef LABWC_TOUCH_H
+ #define LABWC_TOUCH_H
+ 
++#include <stdbool.h>
++
+ struct seat;
+ 
++bool touch_long_press_enabled(void);
++
+ void touch_init(struct seat *seat);
+ void touch_finish(struct seat *seat);
+ 
+diff --git a/src/input/touch.c b/src/input/touch.c
+index 31a3ea4..0a4c088 100644
+--- a/src/input/touch.c
++++ b/src/input/touch.c
+@@ -1,7 +1,10 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ #include "input/touch.h"
+ #include <wayland-util.h>
++#include <stdlib.h>
++#include <time.h>
+ #include <wlr/types/wlr_cursor.h>
++#include <wlr/types/wlr_compositor.h>
+ #include <wlr/types/wlr_scene.h>
+ #include <wlr/types/wlr_seat.h>
+ #include <wlr/types/wlr_touch.h>
+@@ -20,6 +23,13 @@
+ 
+ /* Holds layout -> surface offsets to report motion events in relative coords */
+ struct touch_point {
++ struct seat *seat;
++ struct wl_event_source *hold_timer;
++ struct wl_listener device_destroy, surface_destroy;
++ double start_lx, start_ly, lx, ly;
++ bool pending_press, pending_native, held, emulated_down;
++ uint32_t down_time;
++
+ 	int32_t touch_id;
+ 	uint32_t x_offset;
+ 	uint32_t y_offset;
+@@ -27,6 +37,100 @@ struct touch_point {
+ 	struct wl_list link; /* seat.touch_points */
+ };
+ 
++/* Opt-in for tablet sessions; leave upstream behavior unchanged otherwise. */
++static int
++hold_delay(void)
++{
++ const char *value = getenv("LABWC_TOUCH_LONG_PRESS_MS");
++ if (!value) return 0;
++ char *end;
++ long delay = strtol(value, &end, 10);
++ return *end || delay < 300 || delay > 2000 ? 0 : delay;
++}
++
++bool
++touch_long_press_enabled(void)
++{
++ return hold_delay() > 0;
++}
++
++static void
++cancel_hold(struct touch_point *point)
++{
++ if (point->hold_timer) {
++  wl_event_source_remove(point->hold_timer);
++  point->hold_timer = NULL;
++ }
++}
++
++static void
++free_point(struct touch_point *point)
++{
++ cancel_hold(point);
++ if (point->emulated_down) {
++  struct timespec now;
++  clock_gettime(CLOCK_MONOTONIC, &now);
++  cursor_emulate_button(point->seat, BTN_LEFT, WL_POINTER_BUTTON_STATE_RELEASED,
++   now.tv_sec * 1000 + now.tv_nsec / 1000000);
++ }
++ wl_list_remove(&point->device_destroy.link);
++ wl_list_remove(&point->surface_destroy.link);
++ wl_list_remove(&point->link);
++ zfree(point);
++}
++
++static void
++handle_point_device_destroy(struct wl_listener *listener, void *data)
++{
++ struct touch_point *point = wl_container_of(listener, point, device_destroy);
++ free_point(point);
++}
++
++static void
++handle_point_surface_destroy(struct wl_listener *listener, void *data)
++{
++ struct touch_point *point = wl_container_of(listener, point, surface_destroy);
++ free_point(point);
++}
++
++static void
++deliver_native_down(struct touch_point *point)
++{
++ if (!point->pending_native) return;
++ point->pending_native = false;
++ wlr_seat_touch_notify_down(point->seat->wlr_seat, point->surface,
++  point->down_time, point->touch_id, point->start_lx - point->x_offset,
++  point->start_ly - point->y_offset);
++}
++
++static int
++handle_hold(void *data)
++{
++ struct touch_point *point = data;
++ struct seat *seat = point->seat;
++ cancel_hold(point);
++ if (wl_list_length(&seat->touch_points) != 1) return 0;
++ struct timespec now;
++ clock_gettime(CLOCK_MONOTONIC, &now);
++ uint32_t time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
++ if (point->surface && !point->pending_native) {
++  struct wl_client *client = wl_resource_get_client(point->surface->resource);
++  struct wlr_seat_client *seat_client = wlr_seat_client_for_wl_client(seat->wlr_seat, client);
++  if (seat_client) wlr_seat_touch_notify_cancel(seat->wlr_seat, seat_client);
++ }
++ point->held = true;
++ point->pending_press = false;
++ point->pending_native = false;
++ cursor_emulate_move(seat, NULL, point->lx - seat->cursor->x,
++  point->ly - seat->cursor->y, time);
++ /* Native touch clears pointer focus and may already have warped the cursor.
++  * A zero-distance emulated move is dropped, so restore focus explicitly. */
++ cursor_update_focus();
++ cursor_emulate_button(seat, BTN_RIGHT, WL_POINTER_BUTTON_STATE_PRESSED, time);
++ cursor_emulate_button(seat, BTN_RIGHT, WL_POINTER_BUTTON_STATE_RELEASED, time);
++ return 0;
++}
++
+ static struct wlr_surface *
+ touch_get_coords(struct seat *seat, struct wlr_touch *touch, double x, double y,
+ 		double *x_offset, double *y_offset)
+@@ -91,7 +195,22 @@ handle_touch_motion(struct wl_listener *listener, void *data)
+ 	struct touch_point *touch_point;
+ 	wl_list_for_each(touch_point, &seat->touch_points, link) {
+ 		if (touch_point->touch_id == event->touch_id) {
++   if (touch_point->held) return;
++   wlr_cursor_absolute_to_layout_coords(seat->cursor, &event->touch->base,
++    event->x, event->y, &touch_point->lx, &touch_point->ly);
++   double dx = touch_point->lx - touch_point->start_lx;
++   double dy = touch_point->ly - touch_point->start_ly;
++   if (touch_point->hold_timer && dx * dx + dy * dy > 144) {
++    cancel_hold(touch_point);
++    deliver_native_down(touch_point);
++    if (touch_point->pending_press) {
++     cursor_emulate_button(seat, BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED, event->time_msec);
++     touch_point->pending_press = false;
++     touch_point->emulated_down = true;
++    }
++   }
+ 			if (touch_point->surface) {
++    if (touch_point->pending_native) return;
+ 				/* Convert coordinates: first [0, 1] => layout */
+ 				double lx, ly;
+ 				wlr_cursor_absolute_to_layout_coords(seat->cursor,
+@@ -142,9 +261,40 @@ handle_touch_down(struct wl_listener *listener, void *data)
+ 	touch_point->touch_id = event->touch_id;
+ 	touch_point->x_offset = x_offset;
+ 	touch_point->y_offset = y_offset;
++ touch_point->seat = seat;
++ touch_point->down_time = event->time_msec;
++ wlr_cursor_absolute_to_layout_coords(seat->cursor, &event->touch->base,
++  event->x, event->y, &touch_point->lx, &touch_point->ly);
++ touch_point->start_lx = touch_point->lx;
++ touch_point->start_ly = touch_point->ly;
++ wl_list_init(&touch_point->device_destroy.link);
++ wl_list_init(&touch_point->surface_destroy.link);
++ touch_point->device_destroy.notify = handle_point_device_destroy;
++ wl_signal_add(&event->touch->base.events.destroy, &touch_point->device_destroy);
++ if (touch_point->surface) {
++  touch_point->surface_destroy.notify = handle_point_surface_destroy;
++  wl_signal_add(&touch_point->surface->events.destroy, &touch_point->surface_destroy);
++ }
+ 
+ 	wl_list_insert(&seat->touch_points, &touch_point->link);
+ 	int touch_point_count = wl_list_length(&seat->touch_points);
++ int delay = hold_delay();
++ if (delay && touch_point_count == 1) {
++  struct wl_event_loop *loop = wl_display_get_event_loop(server.wl_display);
++  touch_point->hold_timer = wl_event_loop_add_timer(loop, handle_hold, touch_point);
++  if (touch_point->hold_timer) wl_event_source_timer_update(touch_point->hold_timer, delay);
++ } else if (touch_point_count > 1) {
++  struct touch_point *point;
++  wl_list_for_each(point, &seat->touch_points, link) {
++   cancel_hold(point);
++   deliver_native_down(point);
++   if (point->pending_press) {
++    cursor_emulate_button(seat, BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED, event->time_msec);
++    point->pending_press = false;
++    point->emulated_down = true;
++   }
++  }
++ }
+ 
+ 	/* hide the cursor when starting touch input */
+ 	cursor_set_visible(seat, /* visible */ false);
+@@ -177,15 +327,22 @@ handle_touch_down(struct wl_listener *listener, void *data)
+ 			wlr_cursor_warp_absolute(seat->cursor, &event->touch->base,
+ 				event->x, event->y);
+ 		}
+-		wlr_seat_touch_notify_down(seat->wlr_seat, touch_point->surface,
++  touch_point->pending_native = touch_point->hold_timer != NULL;
++  if (!touch_point->pending_native) {
++		 wlr_seat_touch_notify_down(seat->wlr_seat, touch_point->surface,
+ 			event->time_msec, event->touch_id, sx, sy);
++  }
+ 	} else {
+ 		if (touch_point_count == 1) {
+ 			cursor_emulate_move_absolute(seat, &event->touch->base,
+ 				event->x, event->y, event->time_msec);
+ 		}
+-		cursor_emulate_button(seat, BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED,
++  touch_point->pending_press = touch_point->hold_timer != NULL;
++  if (!touch_point->pending_press) {
++   touch_point->emulated_down = true;
++		 cursor_emulate_button(seat, BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED,
+ 			event->time_msec);
++  }
+ 	}
+ }
+ 
+@@ -201,16 +358,24 @@ handle_touch_up(struct wl_listener *listener, void *data)
+ 	struct touch_point *touch_point, *tmp;
+ 	wl_list_for_each_safe(touch_point, tmp, &seat->touch_points, link) {
+ 		if (touch_point->touch_id == event->touch_id) {
++   cancel_hold(touch_point);
++   if (touch_point->held) { free_point(touch_point); break; }
++   deliver_native_down(touch_point);
++   if (touch_point->pending_press) {
++    cursor_emulate_button(seat, BTN_LEFT, WL_POINTER_BUTTON_STATE_PRESSED, event->time_msec);
++    touch_point->pending_press = false;
++    touch_point->emulated_down = true;
++   }
+ 			if (touch_point->surface) {
+ 				wlr_seat_touch_notify_up(seat->wlr_seat, event->time_msec,
+ 					event->touch_id);
+ 			} else {
+ 				cursor_emulate_button(seat, BTN_LEFT,
+ 					WL_POINTER_BUTTON_STATE_RELEASED, event->time_msec);
++    touch_point->emulated_down = false;
+ 				ssd_update_hovered_button(NULL);
+ 			}
+-			wl_list_remove(&touch_point->link);
+-			zfree(touch_point);
++   free_point(touch_point);
+ 			break;
+ 		}
+ 	}
+@@ -228,6 +393,8 @@ touch_init(struct seat *seat)
+ void
+ touch_finish(struct seat *seat)
+ {
++ struct touch_point *point, *tmp;
++ wl_list_for_each_safe(point, tmp, &seat->touch_points, link) free_point(point);
+ 	wl_list_remove(&seat->touch_down.link);
+ 	wl_list_remove(&seat->touch_up.link);
+ 	wl_list_remove(&seat->touch_motion.link);
+diff --git a/src/seat.c b/src/seat.c
+index fe85dc2..a19e862 100644
+--- a/src/seat.c
++++ b/src/seat.c
+@@ -15,6 +15,7 @@
+ #include <wlr/types/wlr_virtual_pointer_v1.h>
+ #include <wlr/types/wlr_xdg_shell.h>
+ #include <wlr/util/log.h>
++#include "input/touch.h"
+ #include "common/macros.h"
+ #include "common/mem.h"
+ #include "config/libinput.h"
+@@ -529,6 +530,8 @@ seat_update_capabilities(struct seat *seat)
+ 			break;
+ 		case WLR_INPUT_DEVICE_TOUCH:
+ 			caps |= WL_SEAT_CAPABILITY_TOUCH;
++            /* Long-press emits pointer events even without a mouse attached. */
++            if (touch_long_press_enabled()) caps |= WL_SEAT_CAPABILITY_POINTER;
+ 			break;
+ 		default:
+ 			break;

@@ -1,0 +1,31 @@
+/dts-v1/;
+/plugin/;
+/* Exact hash-guarded J86 DT only: pinctrl0x20, AIC1, EHCI1 domain0x18.
+ * HSIC power domain is attached by the exact-board PHY driver; this old DT
+ * does not assign it a phandle. The Lightning gadget remains unchanged.
+ */
+/ {
+ compatible="apple,j86";
+ fragment@0 {
+  target-path="/soc/bus@20c000000";
+  __overlay__ {
+   #address-cells=<2>;
+   #size-cells=<2>;
+   j86_hsic2: phy@20c000060 {
+    compatible="apple,s5l8960x-hsic-phy-range";
+    reg=<0x2 0x0c000060 0 0x10>;
+    #phy-cells=<0>;
+    host-ready-gpios=<0x20 163 0>;
+   };
+   usb-ehci@20c400000 {
+    compatible="apple,s5l8960x-ehci","generic-ehci";
+    reg=<0x2 0x0c400000 0 0x10000>;
+    interrupt-parent=<1>;
+    interrupts=<0 165 4>;
+    power-domains=<0x18>;
+    phys=<&j86_hsic2>;
+    phy-names="usb";
+   };
+  };
+ };
+};

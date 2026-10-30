@@ -1,0 +1,17 @@
+#!/usr/bin/python3
+import json,re,socket,sys
+if len(sys.argv)<2 or sys.argv[1] not in ('install','launch'):raise SystemExit('Usage: j86-apps install PACKAGE | launch APP.desktop')
+action=sys.argv[1];name=sys.argv[2] if len(sys.argv)>2 else input('Repository package to install: ').strip()
+if not name:raise SystemExit('No package selected')
+with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as client:
+ client.connect('/run/j86-apps.sock');client.sendall(json.dumps({'action':action,'name':name}).encode()+b'\n');tail=b''
+ while True:
+  b=client.recv(8192)
+  if not b:break
+  sys.stdout.buffer.write(b);sys.stdout.buffer.flush();tail=(tail+b)[-256:]
+match=re.search(rb'EXIT:(\d+)\n',tail)
+code=int(match[1]) if match else 1
+if action=='install' and sys.stdin.isatty():
+ try:input('Press Enter to close.')
+ except EOFError:pass
+raise SystemExit(code)

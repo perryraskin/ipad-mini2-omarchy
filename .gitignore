@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.ko
+*.o
+*.log
+*.bin
+*.dtbo
+*.ext4
+private-data/
+assets/
+session.json
+research/private-firmware/
+touch/native/assets.json
+desktop/build/*
+!desktop/build/j86-sysroot.ini
