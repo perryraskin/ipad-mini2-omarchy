@@ -48,3 +48,27 @@ and waits for the package process to finish. Delivery is bounded to2seconds
 per socket write. The disconnected-client regression test verifies a child can
 write1MiB and produce its completion receipt without a reader. Service requests
 remain serialized; an abandoned terminal does not start a second transaction.
+
+
+## Installer exposure and bounded transactions
+
+Startup now leaves installs disabled. `apps/start.py --enable-installer` is the
+explicit opt-in after write-path qualification; the menu additionally requires
+its enable marker, the service socket and current health receipt. Launching
+already installed apps does not require enabling installs. No updated service
+has been deployed while USB is unavailable.
+
+Each package request hides readiness before starting. A RAM transaction marker
+survives failure; failed commands revoke installer enablement, and a new daemon
+refuses an uncertain prior transaction. Never automatically remove that marker,
+a pacman database lock or retry a failed transaction. Inspect processes and
+qualify the separate app filesystem first. The physical queue includes this.
+
+Requests have a5second total deadline. Output drains in8KiB chunks (including
+newline-free output), with2second delivery bounds after a terminal disconnects.
+A30minute userspace watchdog terminates/reaps the entire process group, preserving
+uncertain state for review. Kernel uninterruptible I/O cannot be made safe by a
+userspace timeout: the finite NBD timeout, bounded dirty writeback, separate Mac
+disk and fail-closed installer gate remain necessary. No claim of zero stalls.
+Linux integration tests exercise the real UNIX daemon request loop with synthetic
+package/storage operations, including partial requests and uncertain restart.

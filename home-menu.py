@@ -49,17 +49,19 @@ def main():
   try:print('Brightness readback:',original,'->',brightness(max(1,original-64)),flush=True)
   finally:brightness(original)
   return
- def shell(*command,capture_output=False):
-  return subprocess.run(['/usr/bin/setpriv','--reuid=1000','--regid=1000','--init-groups','/usr/bin/env','HOME=/home/tablet','XDG_RUNTIME_DIR=/run/user/1000','OMARCHY_PATH=/home/tablet/.local/share/omarchy-ipad','PATH=/home/tablet/.local/bin:/usr/local/bin:/usr/bin',*command],timeout=8,capture_output=capture_output,text=capture_output)
+ def shell(*command,capture_output=False,timeout=8):
+  return subprocess.run(['/usr/bin/setpriv','--reuid=1000','--regid=1000','--init-groups','/usr/bin/env','HOME=/home/tablet','XDG_RUNTIME_DIR=/run/user/1000','OMARCHY_PATH=/home/tablet/.local/share/omarchy-ipad','PATH=/home/tablet/.local/bin:/usr/local/bin:/usr/bin',*command],timeout=timeout,capture_output=capture_output,text=capture_output)
  def menu(name):shell('/usr/local/bin/omarchy-shell','shell','summon','omarchy.menu','{"menu":"'+name+'"}')
  def key_brightness(direction):
   current=int((backlight/'brightness').read_text())
   print('Volume-key brightness:',brightness(max(1,current+maximum//20*direction)),flush=True)
  def key_volume(direction):
   # The default sink must exist. wpctl failures must not change brightness.
-  sink=shell('/usr/bin/wpctl','inspect','@DEFAULT_AUDIO_SINK@',capture_output=True)
+  sink=shell('/usr/bin/wpctl','inspect','@DEFAULT_AUDIO_SINK@',capture_output=True,timeout=1)
   if sink.returncode or not native_audio_sink(sink.stdout):raise RuntimeError('No native ALSA sink; volume unchanged')
-  result=shell('/usr/bin/wpctl','set-volume','--limit','1.0','@DEFAULT_AUDIO_SINK@','5%+' if direction>0 else '5%-')
+  identity=re.search(r'\bid ([0-9]+),',sink.stdout)
+  if not identity:raise RuntimeError('No verified sink ID; volume unchanged')
+  result=shell('/usr/bin/wpctl','set-volume','--limit','1.0',identity[1],'5%+' if direction>0 else '5%-',timeout=1)
   if result.returncode:raise RuntimeError('No usable PipeWire sink; volume unchanged')
  volume_keys=VolumeKeys(key_brightness,key_volume)
  saved=None;touch=pathlib.Path('/sys/module/j86_touch/parameters')

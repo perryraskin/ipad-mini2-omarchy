@@ -29,8 +29,11 @@ accelerometer interface. Required stages:
    reset or upload guessed firmware. Determine whether a cold RAM boot requires
    private Oscar firmware or can attach to a running M7.
 2. Model stock startup commands, channel handshake, timeouts and error cleanup.
-   `oscar/packet.py` only establishes outgoing IPC framing; it is not an incoming
-   report decoder. Its checksum must not be assumed for incoming telemetry.
+   `oscar/packet.py` establishes outgoing IPC framing. `oscar/receive.py` and
+   `j86-oscar-rx.h` now implement the independently stock-validated incoming
+   checksum/length layer, including zero meaning256 bytes. They do not decode
+   accelerometer reports. Corrupt packets are dropped; stock queues them with
+   diagnostic channel0xba.
 3. Derive incoming packet boundaries, sequence handling, sensor subscription,
    sampling rate, timestamps, units and loss recovery before exposing IIO data.
    Fuzz truncation, unknown channels, bad lengths, checksum and reconnect cases.
@@ -44,3 +47,20 @@ accelerometer interface. Required stages:
 No new UART node is enabled and no PMIC/GPIO writes are supplied. Direct
 accelerometer access behind Oscar is not a supported fallback. Physical pose
 and touch alignment tests are in the consolidated hands-on checklist.
+
+
+## Receive transport checkpoint
+
+`sensors/build-transport.sh` builds `j86-oscar.ko` against the prepared audio
+kernel, with `-Werror` and full matching exports. No module is loaded. The
+serdev client refuses probe by default (`allow_running_attach=false`), requires
+exact J86/4KiB, UART4 address/size, an explicit qualified baud and an explicit
+attach-running-firmware property. No DT node, baud guess, power/reset, firmware
+upload, subscriptions or automatic IIO device is supplied. Opening the UART
+is itself unqualified and possible only after explicit opt-in and DT work.
+
+`derive-receive.py` executes stock receive state8 at0x8401c00 and stops before
+queue/consumer callbacks:20 length/checksum cases passed. Python tests cover all
+split points; the exact C kernel parser matches500 mixed frame/noise cases.
+The parser retains at most256 bytes and never interprets unknown payloads as
+acceleration. Kernel logs expose only channel/command/length, not raw payloads.

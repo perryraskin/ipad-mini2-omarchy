@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Start the separately stored J86 app overlay for the verified RAM session."""
-import base64,hashlib,io,pathlib,re,socket,subprocess,sys,tarfile,time
+import argparse,base64,hashlib,io,pathlib,re,socket,subprocess,sys,tarfile,time
 ROOT=pathlib.Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from sessionlib import config,network,network_checked
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--enable-installer',action='store_true',help='Explicit opt-in after write-path qualification');args=parser.parse_args()
 c=config()
+# Clear stale exposure before startup; launching apps does not require an installer.
+network_checked('rm -f /mnt/omarchy/run/j86-apps-installer-enabled')
 if network('uname -r').strip()!='7.0.12-gdfa4d4208131-dirty':raise SystemExit('Build the matching OverlayFS module before enabling apps on this kernel.')
 image=ROOT/'private-data/apps-overlay.ext4'
 if not image.is_file() or image.is_symlink():raise SystemExit('Dedicated apps disk is missing')
@@ -50,9 +53,13 @@ if 'J86_PROXY_CONFIGURED' not in result:raise SystemExit('App storage/proxy conf
 client=base64.b64encode((ROOT/'desktop/j86-apps').read_bytes()).decode()
 print(network_checked("set -e\nmkdir -p /mnt/omarchy/home/tablet/.local/bin\nbusybox base64 -d <<'J86_APPS_CLIENT' > /mnt/omarchy/home/tablet/.local/bin/j86-apps\n"+client+"\nJ86_APPS_CLIENT\nchmod 755 /mnt/omarchy/home/tablet/.local/bin/j86-apps\nchown 1000:1000 /mnt/omarchy/home/tablet/.local/bin/j86-apps"),end='')
 if network('test -S /mnt/omarchy/run/j86-apps.sock && echo PRESENT').strip():
- print('App service socket already present; preserving it.');raise SystemExit(0)
+ if args.enable_installer:
+  network_checked('test -f /mnt/omarchy/run/j86-apps-ready && test ! -e /mnt/omarchy/run/j86-apps-transaction.json && touch /mnt/omarchy/run/j86-apps-installer-enabled')
+ print('App service socket already present; preserving it. Installer opt-in:',args.enable_installer);raise SystemExit(0)
 print(network('busybox chroot /mnt/j86-apps /usr/bin/python /run/j86-apps-daemon.py >/mnt/omarchy/run/j86-apps.log 2>&1 </dev/null &\necho APPS_SERVICE_REQUESTED'),end='')
 for _ in range(10):
- if network('test -S /mnt/omarchy/run/j86-apps.sock && echo READY').strip():print('App service ready.');break
+ if network('test -S /mnt/omarchy/run/j86-apps.sock && test -f /mnt/omarchy/run/j86-apps-ready && echo READY').strip():
+  if args.enable_installer:network_checked('test ! -e /mnt/omarchy/run/j86-apps-transaction.json && touch /mnt/omarchy/run/j86-apps-installer-enabled')
+  print('App service ready. Installer opt-in:',args.enable_installer);break
  time.sleep(.25)
 else:raise SystemExit(network('tail -15 /mnt/omarchy/run/j86-apps.log'))

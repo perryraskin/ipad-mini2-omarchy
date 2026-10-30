@@ -189,3 +189,31 @@ the same Linux ARM64 build environment with J86_TASK_ROOT set. It creates a
 separate source/output tree and leaves the audio and Wi-Fi build assets alone.
 No boot payload/profile or suspend activation is generated. Budget several GB
 of additional build space. See power/README.md for the NBD-root restriction.
+
+
+## Updated inactive audio2/M7/Wi-Fi candidate
+
+The latest source prepares `7.0.12-j86-audio2` with an experimental muted-bench
+ASoC frontend and a default-off J86 brcmfmac binding. Run prepare-kernel.sh in
+the ARM64 VM, then build the receive-only Oscar transport and external MCA
+module with `sensors/build-transport.sh` and `audio/mca/build.sh` on the Mac.
+All need a complete matching Module.symvers; no modpost warnings bypass remains
+in the Wi-Fi probe build script.
+
+`wifi/build-probes.sh audio-candidate` builds matching sidecars. In the VM,
+`audio/build/package-kernel.sh` packages an isolated initramfs without proprietary
+Wi-Fi/audio/Oscar firmware and normalizes compressed modules for its BusyBox
+loader. Copy the matching j86_wifi_host.ko from wifi/build/probes/audio-candidate
+to audio/build/candidate, then run the following on the Mac:
+
+```sh
+python3 wifi/build/make-ramboot.py --profile audio-candidate
+python3 wifi/build/prepare-profile.py --profile audio-candidate
+```
+
+The resulting private payload preserves the original verified loader/DT/bootargs.
+It does not enable a profile. `./ipad-linux --profile audio-candidate start` is
+an explicit physical RAM-boot operation for Perry's return; the default remains
+known-good. No install-to-internal-storage command is provided. Device boot,
+app storage on this new kernel, and hardware functionality remain unqualified.
+The public GitHub release contains source only; see updates/README.md.

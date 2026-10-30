@@ -20,7 +20,7 @@ struct j86_mca_plan {
  struct j86_mca_write configure[J86_MCA_WRITES];
  struct j86_mca_write start[2];
  struct j86_mca_write stop[2];
- u32 mclk_hz, endpoint, transfer_control, timeout, frame_bytes;
+ u32 mclk_hz, endpoint, transfer_control, timeout, fifo_bytes, trigger_bytes, frame_bytes;
 };
 /* External clock (slave) vs NCO1 requested at 12.288 MHz (master).
  * Parent rate and route are deliberately not derived from guessed clocks.
@@ -48,7 +48,8 @@ static inline int j86_mca_plan(unsigned int rate, unsigned int channels,
  p->stop[0]=(struct j86_mca_write){0x18,0};
  p->stop[1]=(struct j86_mca_write){0x44,1};
  p->mclk_hz=master ? 12288000 : 0;
- p->endpoint=0x2a; p->transfer_control=0x21; p->timeout=0xcc;
+ p->endpoint=0x2a; p->transfer_control=0x21; p->timeout=0;
+ p->fifo_bytes=0xcc; p->trigger_bytes=0xac;
  p->frame_bytes=4; /* SIO parameter10; not the measured 128-word FIFO. */
  return 0;
 }

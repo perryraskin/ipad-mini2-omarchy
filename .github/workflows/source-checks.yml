@@ -23,3 +23,10 @@ jobs:
       - run: python wifi/tests/stage-driver-firmware.py
       - run: python power/tests/preflight.py
       - run: cc -std=c11 -Wall -Wextra -Werror audio/mca/tests/plan.c -o /tmp/j86-mca-plan && /tmp/j86-mca-plan
+      - run: python sensors/tests/oscar-receive.py
+      - run: python sensors/tests/oscar-c-parser.py
+      - run: python wifi/tests/driver-bind-plan.py
+      - run: python apps/tests/transaction-timeout.py
+      - run: python apps/tests/installer-gate.py
+      - run: python tests/boot-profile.py
+      - run: python updates/tests/update.py

@@ -1,7 +1,8 @@
 # Ordered physical validation checklist
 
 This is the single physical test queue for Perry's return. No action is needed
-while he is offline. Do not restore, repartition, flash or install to iPad internal
+while he is offline. The Mac has a prepared, inactive audio2 RAM candidate;
+source-only release updates are documented in updates/README.md. Do not restore, repartition, flash or install to iPad internal
 storage. New Wi-Fi/audio/motion/suspend code is inactive by default. Candidate
 builds are experiments, not a daily-use release. Stop a stage on unexpected
 output and retain its logs before advancing.
@@ -27,30 +28,29 @@ output and retain its logs before advancing.
 4. **Recheck Mac-backed apps and browser.** Verify root is read-only and the app
    store is the separate writable Mac image. Start relay, perform a signed package
    operation with the prepared write path, open the app and browse HTTPS in Firefox.
-   Check app persistence across a clean detach/remount. Never bypass signature
+   Check app persistence across a clean detach/remount. Confirm installs stay hidden after ordinary startup; explicitly enable only after write-path qualification. Test a closed installer terminal, verify transaction completion, and ensure failed/uncertain transactions hide installs and refuse restart until reviewed. Never bypass signature
    checks or write through the read-only root path.
-5. **RAM-boot the inactive Wi-Fi candidate.** Verify profile/module hashes and
-   matching vermagic first. Keep Wi-Fi host enable off initially. Recheck touch,
-   backlight and USB before wireless experiments. If any regress, return to the
+5. **RAM-boot the inactive candidate.** Prefer the latest prepared audio-candidate (7.0.12-j86-audio2) after verifying profile/module hashes and
+   matching vermagic first. It adds disabled driver drafts and the explicit Wi-Fi firmware gate; it is not boot-qualified. The older Wi-Fi candidate remains available. Keep Wi-Fi host enable off initially. Recheck touch,
+   backlight and USB before wireless experiments. The installer must remain hidden because app storage has not been qualified on audio2. If any regress, return to the
    known-good RAM profile; no internal restore.
 6. **Qualify native Wi-Fi in stages.** With RF disabled, verify corrected HSIC
    enumeration0a5c:bd1c, chip4324 rev6 and private vendor-u calibration/NVRAM.
    Run bounded firmware version/revinfo/MAC checks on the calibrated blob before
    RF. The new private driver stage is only a host artifact; do not treat it as
-   an approved scan/association image. Then qualify brcmfmac firmware acceptance,
+   an approved scan/association image. The updated brcmfmac module also requires explicit j86_allow_firmware opt-in; verify its default-off gate before enabling. Then qualify brcmfmac firmware acceptance,
    regulatory state and scan before using Perry's chosen network credentials.
    Test association, DHCP, DNS, HTTPS, signed package download, clean disable and
    touch/USB recovery. Keep credentials and identifying logs private.
 7. **Audio: do not start with speakers.** Requires reviewed exact A7 clock/route,
    IRQ/stop, SIO and amp drivers; the register-plan backend is not a playback
-   driver. First boot the separate audio experiment with SIO off, inventory and
+   driver. First boot the separate audio2 experiment with SIO off, inventory and
    verify power restoration. Qualify explicit SIO boot and muted cyclic DMA,
    clocks and FIFO behavior before releasing amp mute/reset. Use both exact private
    speaker records; no A5/A9 defaults. Only then try a quiet bounded tone, mixer,
    mute, explicit volume-key mode, and switch back to brightness. Stop on heat,
    distortion, missing clock or DMA errors.
-8. **Auto-rotation: qualify the sensor before enabling policy.** Requires an Oscar
-   transport/report decoder and calibrated IIO acceleration. Verify sensor identity,
+8. **Auto-rotation: qualify the sensor before enabling policy.** Requires qualified UART4 baud/power state, explicit receive-only Oscar attach, sensor subscription/report decoder and calibrated IIO acceleration. Verify sensor identity,
    SI units and signed panel-axis mapping in stationary poses. Run policy dry-run,
    check flat/diagonal/shaking rejection and stale-stream behavior. Explicitly apply
    only after mapping is confirmed; check touch and window alignment in every pose.
@@ -70,3 +70,9 @@ output and retain its logs before advancing.
 
 Record dated results and exact profile/commit next to each step when run. Do not
 mark a stage passed based solely on host models, synthetic events or compilation.
+
+
+After a source update, explicitly restart/deploy the reviewed services only during
+this live session. Confirm the new package gate and volume mode after deployment;
+source apply alone does not reload the iPad or switch its RAM boot. The updater
+must never be used as an iPad filesystem/package updater.

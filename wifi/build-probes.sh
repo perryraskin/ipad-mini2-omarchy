@@ -3,12 +3,14 @@
 set -euo pipefail
 TASK_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 profile=${1:-known-good}
-case "$profile" in known-good|candidate) ;; *) echo 'usage: wifi/build-probes.sh [known-good|candidate]' >&2; exit 2;; esac
+case "$profile" in known-good|candidate|audio-candidate) ;; *) echo 'usage: wifi/build-probes.sh [known-good|candidate|audio-candidate]' >&2; exit 2;; esac
 limactl shell j86-build env "J86_TASK_ROOT=$TASK_ROOT" "J86_PROFILE=$profile" bash -c '
 set -euo pipefail
 kernel="$HOME/j86-kernel"; release=7.0.12-gdfa4d4208131-dirty
 if [ "$J86_PROFILE" = candidate ]; then kernel="$HOME/j86-wifi-kernel"; release=7.0.12-j86-wifi1; fi
 test "$(make -s -C "$kernel" ARCH=arm64 kernelrelease)" = "$release"
+if [ "$J86_PROFILE" = audio-candidate ]; then kernel="$HOME/j86-audio-kernel"; release=7.0.12-j86-audio2; fi
+test -s "$kernel/Module.symvers" || { echo "Complete matching exports required" >&2; exit 1; }
 work="$HOME/j86-modules/repro-wifi-$J86_PROFILE"
 out="$J86_TASK_ROOT/wifi/build/probes/$J86_PROFILE"
 mkdir -p "$work" "$out"
@@ -31,13 +33,13 @@ for kind in hsic phy enumeration firmware otp host; do
  otp) cp "$J86_TASK_ROOT/wifi/otp-probe/"*.c "$J86_TASK_ROOT/wifi/otp-probe/"*.h "$mod/"; cp "$J86_TASK_ROOT/wifi/enumeration-probe/j86_wifi_enumeration_probe.c" "$mod/j86_wifi_enumeration_base.h"; cp "$work/j86_overlay_blob.h" "$mod/"; names="j86_wifi_otp_probe j86_wifi_otp_snapshot"; printf "obj-m += j86_wifi_otp_probe.o j86_wifi_otp_snapshot.o\n" >"$mod/Makefile";;
  host) cp "$J86_TASK_ROOT/wifi/host/"*.c "$J86_TASK_ROOT/wifi/host/Makefile" "$mod/"; cp "$work/j86_overlay_blob.h" "$mod/"; names=j86_wifi_host;;
  esac
- if [ "$J86_PROFILE" = candidate ]; then
+ if [ "$J86_PROFILE" != known-good ]; then
   for source in "$mod/"*.c "$mod/"*.h; do
    [ -f "$source" ] || continue
    sed -i "s/7.0.12-gdfa4d4208131-dirty/$release/g" "$source"
   done
  fi
- make -C "$kernel" ARCH=arm64 M="$mod" KBUILD_MODPOST_WARN=1 KCFLAGS=-Werror modules >"$out/$kind.build.log" 2>&1
+ make -C "$kernel" ARCH=arm64 M="$mod" KCFLAGS=-Werror modules >"$out/$kind.build.log" 2>&1
  for name in $names; do cp "$mod/$name.ko" "$out/"; done
 done
 sha256sum "$out/"*.ko >"$out/SHA256SUMS"

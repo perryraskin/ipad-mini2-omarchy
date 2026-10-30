@@ -40,20 +40,38 @@ EOF
 fi
 grep -q 'apple-sio-core.o' drivers/soc/apple/Makefile || printf 'obj-$(CONFIG_APPLE_SIO) += apple-sio-core.o\n' >> drivers/soc/apple/Makefile
 grep -q 'apple-sio-dma.o' drivers/dma/Makefile || printf 'obj-$(CONFIG_APPLE_SIO_DMA) += apple-sio-dma.o\n' >> drivers/dma/Makefile
-scripts/config --set-str LOCALVERSION '-j86-audio1' --disable LOCALVERSION_AUTO \
+cp "$J86_TASK_ROOT/audio/mca/j86-mca.c" "$J86_TASK_ROOT/audio/mca/j86-mca-plan.h" sound/soc/apple/
+if ! grep -q '^config SND_SOC_J86_MCA_BENCH$' sound/soc/apple/Kconfig; then
+ cat >> sound/soc/apple/Kconfig <<'EOF'
+
+config SND_SOC_J86_MCA_BENCH
+ tristate "Experimental muted-bench J86 A7 MCA"
+ depends on SND_SOC && COMMON_CLK && DMA_ENGINE
+ depends on ARCH_APPLE || COMPILE_TEST
+ select SND_SOC_GENERIC_DMAENGINE_PCM
+ help
+   Build-only exact J86 experiment; driver defaults off and no DT/card is supplied.
+EOF
+fi
+grep -q 'j86-mca.o' sound/soc/apple/Makefile || printf 'obj-$(CONFIG_SND_SOC_J86_MCA_BENCH) += j86-mca.o\n' >> sound/soc/apple/Makefile
+scripts/config --set-str LOCALVERSION '-j86-audio2' --disable LOCALVERSION_AUTO \
  --enable WIRELESS --enable WLAN --module CFG80211 --enable WLAN_VENDOR_BROADCOM \
  --module BRCMUTIL --module BRCMFMAC --enable BRCMFMAC_USB --disable BRCMFMAC_SDIO --disable BRCMFMAC_PCIE \
- --enable SOUND --module SND --module SND_SOC --enable DMADEVICES --module APPLE_SIO --module APPLE_SIO_DMA \
+ --enable SOUND --module SND --module SND_SOC --module SND_SOC_J86_MCA_BENCH --enable DMADEVICES --module APPLE_SIO --module APPLE_SIO_DMA \
  --set-str INITRAMFS_SOURCE ''
 make ARCH=arm64 olddefconfig
 grep -q '^CONFIG_DMA_ENGINE=y' .config
 grep -q '^CONFIG_DMA_VIRTUAL_CHANNELS=m' .config
 make ARCH=arm64 -j4 Image modules
-# Recompile our transport modules with warnings treated as errors.
-make ARCH=arm64 KCFLAGS=-Werror drivers/soc/apple/apple-sio-core.ko drivers/dma/apple-sio-dma.ko drivers/dma/virt-dma.ko
+# Strict object compilation, then full-tree modpost. A selective .ko target
+# overwrites Module.symvers with a subset and loses modular ALSA exports.
+make ARCH=arm64 KCFLAGS=-Werror drivers/soc/apple/apple-sio-core.o drivers/dma/apple-sio-dma.o drivers/dma/virt-dma.o sound/soc/apple/j86-mca.o
+make ARCH=arm64 -j4 modules
+grep -q 'devm_snd_soc_register_component' Module.symvers
+grep -q 'devm_snd_dmaengine_pcm_register' Module.symvers
 cp .config "$out/kernel.config"
 cp Module.symvers "$out/Module.symvers"
-cp drivers/soc/apple/apple-sio-core.ko drivers/dma/apple-sio-dma.ko drivers/dma/virt-dma.ko "$out/"
+cp drivers/soc/apple/apple-sio-core.ko drivers/dma/apple-sio-dma.ko drivers/dma/virt-dma.ko sound/soc/apple/j86-mca.ko "$out/"
 make -s ARCH=arm64 kernelrelease > "$out/kernel.release"
 sha256sum "$out/"*.ko > "$out/SHA256SUMS"
 echo 'Build-only audio kernel/modules ready; no initramfs, RAM payload, boot profile or device activation.'

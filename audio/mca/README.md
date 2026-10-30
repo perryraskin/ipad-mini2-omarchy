@@ -60,3 +60,28 @@ for the fixed stereo16 format; it is not FIFO depth. Keep SIO boot disabled.
    records. Keep reset/mute asserted until clocks and DMA are stable. No A5 defaults.
 
 Physical stages are ordered in [HANDS-ON-QUEUE.md](../../HANDS-ON-QUEUE.md).
+
+
+## Disabled ASoC bench frontend
+
+`j86-mca.c` connects the fixed A7 backend to Orchard's ASoC/dmaengine lifecycle.
+It supports only48 kHz stereo S16_LE CPU-master TX, bounded reset/flush/stop
+polls, SmartIO frame4 and the exact ADT shim mapping: xfer0x21, timeout0,
+FIFO0xcc, trigger0xac. An earlier unused plan field mislabeled0xcc as timeout;
+that field is corrected. No RX, IRQ recovery, pause or suspend/resume stream
+shortcut is advertised. There is no speaker machine driver or audible test.
+
+The frontend refuses probe by default (`allow_muted_bench=false`). It additionally
+requires exact J86/4KiB, MCA1 range/version/FIFO, a power domain, explicit bench
+properties affirming both amps remain reset and routing is independently prepared,
+and a real CCF MCLK provider. None of those DT activation nodes is supplied.
+It does not program NCO or switch registers. It claims exclusive rate control,
+requires exactly12.288 MHz and restores the previous rate on shutdown/error.
+This permits future muted DMA qualification without guessing clocks or amps.
+
+`audio/build/prepare-kernel.sh` now prepares `7.0.12-j86-audio2` with generic
+ASoC DMAengine support and this inactive frontend. `audio/mca/build.sh` performs
+an external strict build against the complete matching export table. No payload
+or boot profile is produced. See the consolidated checklist before any bench work.
+
+A private audio2 RAM payload and matching touch/HSIC/host sidecars are now prepared, with all experimental gates off and no proprietary wireless/audio/Oscar firmware embedded. `audio/build-receipt.json` records build results and hashes; physical boot remains pending. The default controller profile remains known-good.

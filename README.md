@@ -66,3 +66,5 @@ Touch protocol/SPI references: Cascadia commit
 `001939843409a0b27d5fd81a2d020d6779be2770`. Original file notices are retained.
 
 Host-only A7 MCA register adaptation is documented in [audio/mca/README.md](audio/mca/README.md). The single ordered physical validation queue is [HANDS-ON-QUEUE.md](HANDS-ON-QUEUE.md). New experiments remain disabled; host checks do not qualify hardware.
+
+Explicit, inactive GitHub source-checkpoint updates are documented in [updates/README.md](updates/README.md). These update Mac-side sources with backups; they do not install an OS or activate a RAM build.

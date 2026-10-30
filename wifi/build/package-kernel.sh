@@ -18,6 +18,9 @@ mkdir -p "$stage" "$out"
 # Only this isolated staging tree is changed; never the live device/module tree.
 rm -rf "$stage/lib/modules"
 make ARCH=arm64 INSTALL_MOD_PATH="$stage" INSTALL_MOD_STRIP=1 modules_install
+# The recovered BusyBox loader expects ordinary .ko files. Normalize only
+# this isolated install tree; never change kernel/root/live module storage.
+while IFS= read -r -d '' module; do zstd -d --rm "$module"; done < <(find "$stage/lib/modules/$release" -name '*.ko.zst' -print0)
 depmod -b "$stage" "$release"
 evdev=$(find "$stage/lib/modules/$release" -name evdev.ko -print -quit)
 test -n "$evdev"

@@ -55,7 +55,7 @@ existing['system.screenoff']={'label':'Screen off','icon':'󰖔','action':'/home
 existing.pop('install.j86-package',None)
 for name in ('ai','service','development','editor','style','gaming','browser','webapp','terminal','tui','windows','aur','preinstalls'):
  existing['install.'+name]={'when':'false'}
-existing['install']={'label':'Install','icon':'󰉉','when':'test -S /run/j86-apps.sock && test -f /run/j86-apps-ready'}
+existing['install']={'label':'Install','icon':'󰉉','when':'test -S /run/j86-apps.sock && test -f /run/j86-apps-ready && test -f /run/j86-apps-installer-enabled'}
 existing['install.package']={'label':'Install app','icon':'󰉉','action':'/usr/bin/foot /home/tablet/.local/bin/j86-apps install'}
 menu.write_text(json.dumps(existing,indent=2)+'\n')
 for base in (bin,profile,apps,home/'.config'):

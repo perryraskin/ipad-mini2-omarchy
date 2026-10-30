@@ -44,3 +44,5 @@ All physical steps live in [HANDS-ON-QUEUE.md](../HANDS-ON-QUEUE.md).
 ## Host build result
 
 The separate ARM64 Image and all configured modules built successfully as `7.0.12-j86-suspend1`. [build-receipt.json](build-receipt.json) records artifact/config hashes and the unchanged DT wake audit. No RAM payload was generated and no device boot or suspend test occurred.
+
+The new Oscar attach draft rejects system suspend while attached because UART/M7 wake is unqualified. The MCA bench draft rejects system suspend while its clock/power lease is active. Neither adds stream resume support or a new suspend menu entry. These compile-time guards do not establish deep A7 resume.

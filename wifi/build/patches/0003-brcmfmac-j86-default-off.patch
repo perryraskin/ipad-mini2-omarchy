@@ -1,0 +1,35 @@
+--- a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/usb.c
++++ b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/usb.c
+@@ -7,6 +7,7 @@
+ #include <linux/module.h>
+ #include <linux/firmware.h>
+ #include <linux/usb.h>
++#include <linux/of.h>
+ #include <linux/vmalloc.h>
+ 
+ #include <brcmu_utils.h>
+@@ -34,6 +35,11 @@
+ #define BRCMF_USB_CBCTL_WRITE		0
+ #define BRCMF_USB_CBCTL_READ		1
+ #define BRCMF_USB_MAX_PKT_SIZE		1600
++
++/* Exact J86 firmware binding is an explicit experiment, never auto-enabled. */
++static bool j86_allow_firmware;
++module_param(j86_allow_firmware, bool, 0444);
++MODULE_PARM_DESC(j86_allow_firmware, "Allow unqualified exact-J86 USB firmware (default off)");
+ 
+ BRCMF_FW_DEF(43143, "brcmfmac43143");
+ BRCMF_FW_DEF(43236B, "brcmfmac43236b");
+@@ -1360,6 +1366,12 @@
+ 		}
+ 	}
+ 
++	if (le16_to_cpu(usb->descriptor.idVendor) == 0x0a5c &&
++	    le16_to_cpu(usb->descriptor.idProduct) == 0xbd1c &&
++	    (!j86_allow_firmware || !of_machine_is_compatible("apple,j86") ||
++	     PAGE_SIZE != 4096))
++		return -EPERM;
++
+ 	brcmf_dbg(USB, "Enter 0x%04x:0x%04x\n", id->idVendor, id->idProduct);
+ 
+ 	devinfo = kzalloc_obj(*devinfo, GFP_ATOMIC);

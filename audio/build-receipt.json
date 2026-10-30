@@ -1,0 +1,18 @@
+{
+  "kernel_release": "7.0.12-j86-audio2",
+  "build_result": "passed",
+  "strict_mca_module_build": "passed",
+  "strict_oscar_module_build": "passed",
+  "boot_tested": false,
+  "payload_activation": false,
+  "firmware_included": false,
+  "private_payload_sha256": "7e5f85c183413f77f0de9cc4a1b476241e55de7102f3ad18362243dbadf10f9b",
+  "mca_module_sha256": "f50a1d61e271a17381611c45e22e1f28dc396eeaee405bdf1b4dd6bc72c35550",
+  "oscar_module_sha256": "006a179c0bb4b7e3167b5689add43d7794426b55267beb7dd0edfb099e64dd07",
+  "source_notes": [
+    "MCA pre-routed muted-bench only; no speaker driver",
+    "Oscar receive framing only; no report decoder or sensor subscription",
+    "brcmfmac exact J86 firmware gate defaults off",
+    "No DT hardware activation or default-profile switch"
+  ]
+}

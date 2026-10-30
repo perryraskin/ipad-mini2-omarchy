@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Exercise the production subprocess drain without device/root prerequisites."""
-import ast,pathlib,socket,subprocess,sys,tempfile,threading
+import ast,os,selectors,signal,time,pathlib,socket,subprocess,sys,tempfile,threading
 source=pathlib.Path(__file__).resolve().parents[1]/'session-daemon.py'
 node=next(n for n in ast.parse(source.read_text()).body if isinstance(n,ast.FunctionDef) and n.name=='stream_process')
-scope={'subprocess':subprocess};exec(compile(ast.Module(body=[node],type_ignores=[]),str(source),'exec'),scope)
+scope={'subprocess':subprocess,'os':os,'selectors':selectors,'signal':signal,'time':time};exec(compile(ast.Module(body=[node],type_ignores=[]),str(source),'exec'),scope)
 with tempfile.TemporaryDirectory() as directory:
  receipt=pathlib.Path(directory)/'done'
  left,right=socket.socketpair();right.close()

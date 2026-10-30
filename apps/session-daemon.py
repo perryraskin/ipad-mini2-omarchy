@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 """Apps in the dedicated Mac-backed overlay; local desktop-user requests only."""
-import configparser,json,os,pathlib,re,shlex,socket,struct,subprocess,signal
+import configparser,json,os,pathlib,re,shlex,socket,struct,subprocess,signal,selectors,time
 HOME=pathlib.Path('/home/tablet');RUNTIME=pathlib.Path('/run/user/1000')
 SOCKET=pathlib.Path('/run/j86-apps.sock')
 READY=pathlib.Path('/run/j86-apps-ready')
+INSTALLER=pathlib.Path('/run/j86-apps-installer-enabled')
+TRANSACTION=pathlib.Path('/run/j86-apps-transaction.json')
 assert os.geteuid()==0
 assert pathlib.Path('/proc/device-tree/model').read_bytes().rstrip(b'\0')==b'Apple iPad mini 2 (Cellular)'
 assert any(x.split()[1:3]==['/','overlay'] and 'rw' in x.split()[3].split(',') for x in pathlib.Path('/proc/mounts').read_text().splitlines())
@@ -16,17 +18,31 @@ def env():
   if item.startswith(b'DBUS_SESSION_BUS_ADDRESS='):value['DBUS_SESSION_BUS_ADDRESS']=item.split(b'=',1)[1].decode()
  return value
 
-def stream_process(command,client):
- # A closed terminal must not abandon a package transaction or block its pipe.
- # Bound delivery latency; continue draining and reap the child after disconnect.
- p=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
- connected=True
- previous=client.gettimeout();client.settimeout(2)
+def stream_process(command,client,timeout=1800,kill_grace=5):
+ # Drain fixed chunks, including output without newlines. Never retry pacman.
+ # A timeout terminates/reaps the process group; an unreapable process is an
+ # uncertain transaction and its marker must remain for manual recovery.
+ p=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,start_new_session=True)
+ connected=True;previous=client.gettimeout();client.settimeout(2)
+ deadline=time.monotonic()+timeout
  try:
-  for line in iter(p.stdout.readline,b''):
-   if connected:
-    try:client.sendall(line)
-    except OSError:connected=False
+  with selectors.DefaultSelector() as selector:
+   selector.register(p.stdout,selectors.EVENT_READ)
+   while selector.get_map() or p.poll() is None:
+    if time.monotonic()>=deadline:
+     os.killpg(p.pid,signal.SIGTERM)
+     try:p.wait(timeout=kill_grace)
+     except subprocess.TimeoutExpired:
+      os.killpg(p.pid,signal.SIGKILL)
+      try:p.wait(timeout=kill_grace)
+      except subprocess.TimeoutExpired:raise RuntimeError('Transaction process could not be reaped; keep installer disabled')
+     raise RuntimeError('Transaction timed out; installer disabled pending storage review')
+    for key,_ in selector.select(min(.1,max(0,deadline-time.monotonic()))):
+     data=os.read(key.fd,8192)
+     if not data:selector.unregister(key.fileobj);continue
+     if connected:
+      try:client.sendall(data)
+      except OSError:connected=False
   return p.wait()
  finally:
   p.stdout.close();client.settimeout(previous)
@@ -60,6 +76,7 @@ def storage_health():
  p=directory/'health'
  with p.open('w') as f:f.write('J86 app storage writable\n');f.flush();os.fsync(f.fileno())
  if p.read_text()!='J86 app storage writable\n':raise OSError('App storage readback mismatch')
+if TRANSACTION.exists():raise SystemExit('Uncertain previous transaction; inspect storage/processes before restarting')
 storage_health()
 signal.signal(signal.SIGTERM,lambda *_:sys_exit())
 def sys_exit():raise SystemExit(0)
@@ -71,17 +88,26 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
   while True:
    client,_=server.accept()
    with client:
+    client.settimeout(5)
     try:
      _,uid,_=struct.unpack('3i',client.getsockopt(socket.SOL_SOCKET,socket.SO_PEERCRED,12))
      if uid not in (0,1000):raise ValueError('Wrong desktop user')
-     raw=b''
+     raw=b'';request_deadline=time.monotonic()+5
      while b'\n' not in raw:
+      remaining=request_deadline-time.monotonic()
+      if remaining<=0:raise ValueError('Request deadline expired')
+      client.settimeout(remaining)
       part=client.recv(1024)
       if not part or len(raw)+len(part)>4096:raise ValueError('Invalid request')
       raw+=part
+     client.settimeout(2)
      req=json.loads(raw.split(b'\n',1)[0]);action=req.get('action');name=req.get('name','')
      if action=='install':
       if not re.fullmatch(r'[a-z0-9][a-z0-9+_.@-]*',name):raise ValueError('Enter one repository package name')
+      if not INSTALLER.is_file():raise ValueError('Installer is disabled; explicitly qualify and enable the Mac write path first')
+      READY.unlink(missing_ok=True)
+      fd=os.open(TRANSACTION,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+      with os.fdopen(fd,'w') as f:json.dump({'package':name,'daemon_pid':os.getpid(),'started':time.time()},f)
       ring=pathlib.Path('/etc/pacman.d/gnupg')
       if not ((ring/'pubring.gpg').exists() or (ring/'pubring.kbx').exists()):
        for command in (['/usr/bin/pacman-key','--init'],['/usr/bin/pacman-key','--populate','archlinuxarm']):
@@ -91,6 +117,9 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
       try:storage_health()
       except (OSError,ValueError):
        READY.unlink(missing_ok=True);raise
+      if code!=0:raise RuntimeError('Package operation failed; installer disabled pending review (exit '+str(code)+')')
+      TRANSACTION.unlink()
+      READY.write_text('J86 app storage ready\n');os.chmod(READY,0o644)
       if code==0:publish()
       client.sendall(('\nEXIT:'+str(code)+'\n').encode())
      elif action=='launch':
@@ -100,7 +129,8 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
        subprocess.Popen(command,env=env(),stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,preexec_fn=user,start_new_session=True)
       client.sendall(b'Application launch requested.\nEXIT:0\n')
      else:raise ValueError('Unknown app action')
-    except (OSError,ValueError,KeyError,configparser.Error) as error:
+    except (OSError,ValueError,KeyError,RuntimeError,configparser.Error) as error:
+     if TRANSACTION.exists():READY.unlink(missing_ok=True);INSTALLER.unlink(missing_ok=True)
      try:client.sendall((str(error)+'\nEXIT:1\n').encode())
      except OSError:pass
  finally:

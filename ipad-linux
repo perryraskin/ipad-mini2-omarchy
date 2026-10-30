@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""J86 RAM desktop controller. Never installs to iPad storage."""
+import argparse,base64,fcntl,glob,hashlib,io,json,os,pathlib,plistlib,re,shlex,socket,subprocess,sys,tarfile,time
+from sessionlib import ROOT,config,discover_network,network,serial
+
+def usb():return subprocess.check_output(['ioreg','-p','IOUSB','-w','0'],text=True)
+def wait_usb(label,seconds=25):
+ deadline=time.monotonic()+seconds
+ while time.monotonic()<deadline:
+  if label in usb():return True
+  time.sleep(.5)
+ return False
+
+def verify_assets():
+ receipt=json.loads((ROOT/'assets/session-assets.json').read_text())
+ for name,expected in receipt.items():
+  h=hashlib.sha256()
+  with (ROOT/'assets'/name).open('rb') as f:
+   for b in iter(lambda:f.read(8*1024*1024),b''):h.update(b)
+  if h.hexdigest()!=expected:raise RuntimeError('Asset verification failed: '+name)
+ print('RAM payload, module and host root image checksums verified.',flush=True)
+
+def ensure_web_proxy(c):
+ found=subprocess.run(['lsof','-nP','-iTCP@'+c['host_ip']+':1080','-sTCP:LISTEN','-Fp'],capture_output=True,text=True)
+ pids=re.findall(r'^p(\d+)$',found.stdout,re.M)
+ suffix='serve-web-proxy.py '+c['host_ip']+' '+c['device_ip']
+ if pids:
+  if len(pids)!=1:raise RuntimeError('Multiple web proxy listeners; inspect before continuing.')
+  command=subprocess.check_output(['ps','-p',pids[0],'-o','command='],text=True).strip()
+  cwd=subprocess.check_output(['lsof','-a','-p',pids[0],'-d','cwd','-Fn'],text=True)
+  absolute=str(ROOT/'serve-web-proxy.py')+' '+c['host_ip']+' '+c['device_ip']
+  if not (command.endswith(absolute) or (command.endswith(suffix) and '\nn'+str(ROOT)+'\n' in cwd)):
+   raise RuntimeError('USB web port is occupied by another process.')
+  return
+ with (ROOT/'private-data/web-proxy.log').open('ab') as log:
+  subprocess.Popen([sys.executable,str(ROOT/'serve-web-proxy.py'),c['host_ip'],c['device_ip']],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+
+def ensure_root_server(c):
+ # Reuse only the exact workspace's read-only server on the expected USB bind.
+ found=subprocess.run(['lsof','-nP','-iTCP@'+c['host_ip']+':10811','-sTCP:LISTEN','-Fp'],capture_output=True,text=True)
+ pids=re.findall(r'^p(\d+)$',found.stdout,re.M)
+ if pids:
+  if len(pids)!=1:raise RuntimeError('Multiple NBD listeners; refusing to replace them.')
+  pid=pids[0]
+  command=subprocess.check_output(['ps','-p',pid,'-o','command='],text=True).strip()
+  expected=' '.join([str(ROOT/'serve-root-readonly.py'),str(ROOT/'assets/omarchy-a-ramroot.ext4'),c['host_ip'],c['device_ip']])
+  opened=subprocess.check_output(['lsof','-p',pid,'-Fn'],text=True)
+  cwd_info=subprocess.check_output(['lsof','-a','-p',pid,'-d','cwd','-Fn'],text=True)
+  cwd_match=re.search(r'^n(.+)$',cwd_info,re.M)
+  relative=''
+  if cwd_match:
+   cwd=cwd_match.group(1)
+   relative=' '.join([os.path.relpath(ROOT/'serve-root-readonly.py',cwd),os.path.relpath(ROOT/'assets/omarchy-a-ramroot.ext4',cwd),c['host_ip'],c['device_ip']])
+  if not (command.endswith(expected) or (relative and command.endswith(relative))) or '\nn'+str(ROOT/'assets/omarchy-a-ramroot.ext4')+'\n' not in opened:
+   raise RuntimeError('Port10811 belongs to an unverified process; no process was stopped.')
+  print('Reusing this workspace read-only root server.',flush=True)
+  return
+ log=(ROOT/'root-server.log').open('ab')
+ server=subprocess.Popen([sys.executable,str(ROOT/'serve-root-readonly.py'),str(ROOT/'assets/omarchy-a-ramroot.ext4'),c['host_ip'],c['device_ip']],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+ (ROOT/'root-server.pid').write_text(str(server.pid)+'\n');log.close()
+ time.sleep(.3)
+ if server.poll() is not None:raise RuntimeError('Root server could not start; inspect root-server.log.')
+
+def boot_profile():
+ if a.profile=='known-good':
+  return {'kernel_release':'7.0.12-gdfa4d4208131-dirty','payload':'assets/j86-ramboot.bin','evdev':'assets/evdev.ko','touch_manifest':'touch/native/assets.json'}
+ directory='audio/build/candidate' if a.profile=='audio-candidate' else 'wifi/build/candidate'
+ value=json.loads((ROOT/directory/'boot-profile.json').read_text())
+ if value.get('board')!='J86' or value.get('page_size')!=4096:raise RuntimeError('Candidate board/page profile mismatch')
+ expected_release='7.0.12-j86-audio2' if a.profile=='audio-candidate' else '7.0.12-j86-wifi1'
+ if value.get('kernel_release')!=expected_release or value.get('payload')!=directory+'/j86-ramboot.bin' or value.get('evdev')!=directory+'/evdev.ko':raise RuntimeError('Candidate identity/path mismatch')
+ required={directory+'/'+name for name in ('j86-ramboot.bin','evdev.ko','j86_touch.ko','j86_hsic_range.ko','j86_wifi_host.ko')}
+ if not required.issubset(value.get('sha256',{})):raise RuntimeError('Incomplete candidate hash coverage')
+ if value.get('touch_manifest')!='private-data/'+a.profile+'-touch-assets.json':raise RuntimeError('Unexpected private touch manifest')
+ for path,expected in value['sha256'].items():
+  if pathlib.PurePosixPath(path).is_absolute() or '..' in pathlib.PurePosixPath(path).parts or not path.startswith(directory+'/'):raise RuntimeError('Unexpected candidate asset path')
+  if hashlib.sha256((ROOT/path).read_bytes()).hexdigest()!=expected:raise RuntimeError('Candidate checksum mismatch: '+path)
+ return value
+
+def start_touch(profile):
+ subprocess.run([sys.executable,str(ROOT/'start-touch.py'),'--manifest',str(ROOT/profile['touch_manifest']),'--kernel-release',profile['kernel_release']],check=True)
+
+def ensure_apps():
+ if (ROOT/'private-data/apps-qualified.json').is_file():
+  qualification=json.loads((ROOT/'private-data/apps-qualified.json').read_text())
+  if network('uname -r').strip()!=qualification['kernel']:
+   print('Apps remain disabled: this kernel has no qualified app-storage profile.');return
+  subprocess.run([sys.executable,str(ROOT/'apps/start.py')],check=True)
+
+def start():
+ verify_assets()
+ profile=boot_profile()
+ if not glob.glob('/dev/cu.usbmodempomme*'):
+  if 'PongoOS USB Device' not in usb():
+   q=subprocess.run(['irecovery','-q'],capture_output=True,text=True,timeout=12)
+   if 'MODE: DFU' not in q.stdout:raise RuntimeError('Enter DFU first: ./ipad-linux dfu. Expected J86 only.')
+   result=subprocess.run([sys.executable,str(ROOT/'boot-pongo.py')])
+   if 'PongoOS USB Device' not in usb():
+    input('Reconnect Lightning without pressing buttons, then press Enter: ')
+    if 'PongoOS USB Device' not in usb():
+     if result.returncode==0:raise RuntimeError('Pongo upload returned success but no console appeared. Inspect the iPad screen before retrying.')
+     subprocess.run([sys.executable,str(ROOT/'boot-pongo.py')],check=True)
+   if not wait_usb('PongoOS USB Device',8):
+    input('If the iPad shows PongoOS, reconnect Lightning once, then press Enter: ')
+   if 'PongoOS USB Device' not in usb():raise RuntimeError('Pongo USB console not present. Inspect the screen and log; no Linux upload attempted.')
+  tree=plistlib.loads(subprocess.check_output(['ioreg','-p','IOUSB','-a','-l']))
+  found=[]
+  def walk(node):
+   if isinstance(node,list):
+    for child in node:walk(child)
+   elif isinstance(node,dict):
+    if node.get('idVendor')==0x5ac and node.get('idProduct')==0x4141:found.append(node)
+    walk(node.get('IORegistryEntryChildren',[]))
+  walk(tree)
+  if len(found)!=1:raise RuntimeError('Expected exactly one Pongo USB device.')
+  identity=found[0].get('USB Serial Number',found[0].get('kUSBSerialNumberString','')).lower()
+  if 'cpid:8960' not in identity or not re.search(r'bdid:0?c(?: |$)',identity):raise RuntimeError('Pongo chip/board identity is not the expected J86. Refusing upload.')
+  link=pathlib.Path('/tmp/perry-j86-ramboot.bin')
+  if link.is_symlink():link.unlink()
+  if link.exists():raise RuntimeError('Temporary payload path is occupied; refusing to replace it.')
+  link.symlink_to(ROOT/profile['payload'])
+  log=(ROOT/'linux-upload.log').open('wb')
+  p=subprocess.Popen([str(ROOT/'pongoterm')],stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT)
+  try:
+   p.stdin.write(('/send '+str(link)+'\n').encode());p.stdin.flush()
+   deadline=time.monotonic()+25
+   uploaded=False
+   while time.monotonic()<deadline:
+    if ('Uploaded '+str((ROOT/profile['payload']).stat().st_size)+' bytes').encode() in (ROOT/'linux-upload.log').read_bytes()[-4000:]:uploaded=True;break
+    time.sleep(.5)
+   if not uploaded:raise RuntimeError('Linux upload not confirmed; bootm was not sent.')
+   p.stdin.write(b'bootm\n');p.stdin.flush()
+   if not wait_usb('pomme USB bring-up gadget',25):raise RuntimeError('No Linux gadget after bootm. Inspect the iPad; do not reinstall anything.')
+  finally:
+   p.terminate()
+   try:p.wait(timeout=3)
+   except subprocess.TimeoutExpired:p.kill();p.wait()
+   log.close()
+ print('Linux USB gadget present.',flush=True)
+ ident=serial('cat /proc/device-tree/model; echo; uname -r')
+ if 'Apple iPad mini 2 (Cellular)' not in ident or profile['kernel_release'] not in ident:raise RuntimeError('Live model/kernel mismatch; refusing setup.')
+ c=discover_network()
+ serial('ip addr add '+c['device_ip']+'/16 dev usb0 2>/dev/null || true')
+ print(network('echo USB_NETWORK_PREFLIGHT_OK'),end='',flush=True)
+ ensure_web_proxy(c)
+ ready=network('test -f /mnt/omarchy/run/user/1000/omarchy-desktop-ready.json && cat /mnt/omarchy/run/user/1000/omarchy-desktop-ready.json')
+ if 'shell_pid' in ready:
+  start_touch(profile)
+  ensure_apps()
+  print('An Omarchy session is already running; preserving it.');return
+ # Keep the serial fallback alive after an interactive shell exits.
+ network("for p in /proc/[0-9]*; do if [ \"$(busybox readlink \"$p/fd/0\" 2>/dev/null)\" = /dev/ttyGS0 ]; then kill -TERM \"${p##*/}\"; fi; done; setsid sh -c 'while :; do sh </dev/ttyGS0 >/dev/ttyGS0 2>&1; done' </dev/null >/dev/null 2>&1 &")
+ mounted=network("grep ' /mnt/omarchy ext4 ro,' /proc/mounts")
+ if not mounted.strip():
+  ensure_root_server(c)
+  print(network('busybox nbd-client -b 4096 '+c['host_ip']+' 10811 /dev/nbd2'),end='')
+  capacity=False
+  for attempt in range(15):
+   if '8388608' in network('cat /sys/block/nbd2/size'):capacity=True;break
+   time.sleep(.3)
+  if not capacity:raise RuntimeError('NBD capacity not ready; root was not mounted.')
+  print(network('mkdir -p /mnt/omarchy; mount -t ext4 -o ro,noload /dev/nbd2 /mnt/omarchy'),end='')
+ data=io.BytesIO()
+ with tarfile.open(fileobj=data,mode='w:gz') as t:
+  for source,name in [(ROOT/profile['evdev'],'evdev.ko'),(ROOT/'home-menu.py','home-menu.py'),(ROOT/'launch-desktop.sh','launch-desktop.sh')]:t.add(source,arcname=name)
+  t.add(ROOT/'desktop',arcname='desktop',filter=lambda entry: None if '__pycache__' in entry.name else entry)
+  host_bytes=(c['host_ip']+'\n').encode();entry=tarfile.TarInfo('usb-web-host');entry.size=len(host_bytes);t.addfile(entry,io.BytesIO(host_bytes))
+  for source in (ROOT/'assets/vnc').iterdir():t.add(source,arcname='vnc/'+source.name)
+ command="mkdir -p /tmp/omarchy-support; busybox base64 -d <<'SUPPORT' | busybox tar -xz -C /tmp/omarchy-support\n"+base64.encodebytes(data.getvalue()).decode()+"SUPPORT\n"
+ print(network(command),end='')
+ start_touch(profile)
+ print(network('sh /tmp/omarchy-support/launch-desktop.sh'),end='')
+ for attempt in range(90):
+  ready=network('cat /mnt/omarchy/run/user/1000/omarchy-desktop-ready.json')
+  if 'shell_pid' in ready:print(ready,end='');break
+  time.sleep(.5)
+ else:raise RuntimeError('Desktop has no ready receipt; inspect labwc and shell logs via ./ipad-linux shell.')
+ ensure_apps()
+ print('Omarchy RAM desktop ready. Run ./ipad-linux view for Mac mouse and keyboard.')
+
+def status():
+ print(network('echo MODEL; cat /proc/device-tree/model; echo; uname -r; echo ROOT; grep " /mnt/omarchy " /proc/mounts; echo DESKTOP; cat /mnt/omarchy/run/user/1000/omarchy-desktop-ready.json; echo MEMORY; cat /proc/meminfo | head -n 3; echo INPUT; cat /proc/bus/input/devices; echo TOUCH; for n in state last_result finger_frames invalid_frames; do echo $n; cat /sys/module/j86_touch/parameters/$n; done'),end='')
+
+def view():
+ print(network((ROOT/'launch-vnc.sh').read_text()),end='')
+ c=config()
+ with socket.create_connection((c['device_ip'],5900),timeout=5) as s:
+  if not s.recv(12).startswith(b'RFB '):raise RuntimeError('Unexpected desktop-control protocol')
+ subprocess.run(['open','vnc://'+c['device_ip']],check=True)
+
+def stop(reboot=True):
+ # App overlay holds shared desktop mounts; detach it before the base root.
+ subprocess.run([sys.executable,str(ROOT/'apps/stop.py')],check=True)
+ if reboot and network('cat /sys/module/j86_touch/parameters/state 2>/dev/null').strip()=='2':
+  network('echo N > /sys/module/j86_touch/parameters/enabled')
+  for attempt in range(30):
+   if network('cat /sys/module/j86_touch/parameters/state').strip()=='0':break
+   time.sleep(.1)
+  else:raise RuntimeError('Touch shutdown/restoration not confirmed; refusing reboot.')
+ # Select only processes whose actual chroot is this read-only Omarchy root.
+ print(network('for p in /proc/[0-9]*; do [ "$(busybox readlink "$p/root" 2>/dev/null)" != /mnt/omarchy ] || kill -TERM "${p##*/}"; done'),end='')
+ alive=''
+ for attempt in range(15):
+  alive=network('for p in /proc/[0-9]*; do [ "$(busybox readlink "$p/root" 2>/dev/null)" != /mnt/omarchy ] || echo "${p##*/}"; done')
+  if not alive.strip():break
+  time.sleep(.3)
+ if alive.strip():raise RuntimeError('Desktop processes still running; refusing to unmount. Inspect status.')
+ result=network('set -e; for n in home/tablet/.local/share/omarchy-ipad/themes home run tmp dev/shm dev/pts dev sys proc; do if grep -q " /mnt/omarchy/$n " /proc/mounts; then umount "/mnt/omarchy/$n"; fi; done; if grep -q " /ram-home/tablet/.local/share/omarchy-ipad/themes " /proc/mounts; then umount /ram-home/tablet/.local/share/omarchy-ipad/themes; fi; if grep -q " /mnt/omarchy-base " /proc/mounts; then umount /mnt/omarchy-base; fi; umount /mnt/omarchy; busybox nbd-client -d /dev/nbd2; echo ROOT_DETACHED')
+ print(result,end='')
+ if 'ROOT_DETACHED' not in result:raise RuntimeError('Root detach was not confirmed; refusing reboot.')
+ network('sync')
+ if not reboot:
+  print('Desktop stopped; host filesystem detached. Linux remains in RAM.');return
+ # The disconnect is expected, so do not use the acknowledged command helper.
+ c=config()
+ with socket.create_connection((c['device_ip'],23),timeout=5) as s:s.sendall(b'busybox reboot -f\n')
+ print('Requested return to iOS. Keep cable connected until the Apple logo appears.')
+
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--profile',choices=['known-good','candidate','audio-candidate'],default='known-good',help='Candidate is unbooted; requires a deliberate physical DFU test')
+parser.add_argument('action',choices=['start','status','shell','view','ios','detach','dfu'])
+parser.add_argument('command',nargs='*')
+a=parser.parse_args()
+lock=(ROOT/'controller.lock').open('w');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+try:
+ if a.action=='start':start()
+ elif a.action=='status':status()
+ elif a.action=='view':view()
+ elif a.action=='ios':stop()
+ elif a.action=='detach':stop(False)
+ elif a.action=='shell':print(network(' '.join(a.command) if a.command else 'uname -a'),end='')
+ elif a.action=='dfu':subprocess.run([str(ROOT/'assets/palera1n-macos-arm64'),'-D','-S'],check=True)
+except (Exception,KeyboardInterrupt) as e:sys.exit(str(e) or 'Stopped; inspect device state before retrying.')

@@ -14,6 +14,8 @@ audio/sio/source/
 audio/sio/build/
 audio/build/candidate/
 power/build/
+sensors/build/
+audio/mca/build/
 *.dtbo
 *.ext4
 private-data/

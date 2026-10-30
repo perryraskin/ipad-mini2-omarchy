@@ -14,6 +14,7 @@ int main(void)
   for (unsigned int i=0; i<2; i++)
    printf("%u stop %04x %08x\n",master,p.stop[i].offset,p.stop[i].value);
   assert(p.endpoint==0x2a && p.frame_bytes==4);
+  assert(p.timeout==0 && p.fifo_bytes==0xcc && p.trigger_bytes==0xac);
  }
  assert(j86_mca_plan(44100,2,16,0,&p)==-EINVAL);
  assert(j86_mca_plan(48000,1,16,0,&p)==-EINVAL);

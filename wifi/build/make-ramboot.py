@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Preserve the verified J86 loader/DT/bootargs and replace its kernel stream."""
-import gzip,hashlib,json,pathlib,zlib
+import argparse,gzip,hashlib,json,pathlib,zlib
 root=pathlib.Path(__file__).resolve().parents[2]
-out=root/'wifi/build/candidate'
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--profile',choices=['candidate','audio-candidate'],default='candidate');args=parser.parse_args()
+out=root/('audio/build/candidate' if args.profile=='audio-candidate' else 'wifi/build/candidate')
 old=(root/'assets/j86-ramboot.bin').read_bytes()
 expected=json.loads((root/'assets/session-assets.json').read_text())['j86-ramboot.bin']
 assert hashlib.sha256(old).hexdigest()==expected, 'Original payload checksum mismatch'
