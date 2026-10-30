@@ -16,3 +16,4 @@ jobs:
       - run: python apps/tests/root-readonly.py
       - run: python wifi/tests/calibration.py
       - run: python sensors/tests/oscar-packet.py
+      - run: python tests/network-deadline.py

@@ -48,9 +48,13 @@ def network(command,timeout=40,binary=False):
   raise
  marker='DONE_'+uuid.uuid4().hex
  script='exec 2>&1\n'+command+"\nprintf '\\n"+marker+"\\n'\nexit\n"
- s.sendall(script.encode());s.settimeout(timeout);data=b''
+ data=b''
  try:
+  s.sendall(script.encode());deadline=time.monotonic()+timeout
   while True:
+   remaining=deadline-time.monotonic()
+   if remaining<=0:raise TimeoutError('USB shell total response deadline exceeded; inspect state before retrying')
+   s.settimeout(remaining)
    part=s.recv(1024*1024)
    if not part:break
    data+=part

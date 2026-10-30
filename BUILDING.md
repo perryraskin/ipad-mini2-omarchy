@@ -126,3 +126,9 @@ Oscar framing fixture tests: `python3 sensors/tests/oscar-packet.py` needs no
 private data. With Unicorn and the matching owner cache,
 `python3 sensors/oscar/derive-packet.py KERNELCACHE` compares the portable encoder
 to stock code in emulator RAM and stops before transport. It never opens UART.
+
+
+`python3 tests/network-deadline.py` checks fragmented shell acknowledgment,
+a total response deadline under trickling data, send-failure socket cleanup and
+no command replay. A lost acknowledgment does not establish command failure;
+inspect live state before retrying any device mutation.
