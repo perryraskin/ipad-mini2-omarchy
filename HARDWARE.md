@@ -108,9 +108,9 @@ acceptance, scan and association remain development/physical-test work.
 ## Offline SIO DMA transport model
 
 `audio/derive-sio.py` executes the exact stock SmartIO DMA configuration and
-setParam routines using synthetic data. Configuration opcode5 references shared
-configuration storage; parameter opcode3 carries parameter10 and a modeled frame
-size128. The model checks field placement and successful reply0x65, plus command
+setParam routines using synthetic data. Configuration opcode 5 references shared
+configuration storage; parameter opcode 3 carries parameter 10 and a modeled frame
+size 128. The model checks field placement and successful reply 0x65, plus command
 and shared-slot cleanup after modeled allocation/submission failures. It has
 passed success, no-slot and submit-error cases. Command pools, shared-slot
 allocation, firmware replies and transport success are explicit fakes.
@@ -118,14 +118,14 @@ allocation, firmware replies and transport success are explicit fakes.
 No SIO firmware boot, shared-memory DMA mapping, interrupts, cyclic PCM transport
 or hardware audio is implemented by this model. The existing Linux ADMAC driver
 is not this A7 SmartIO transport. The owner ADT identifies SIO at0x20ae00000,
-size0x2000, interrupts133/132/135/134 and IOP version1. Do not read mailbox data
+size 0x2000, interrupts133/132/135/134 and IOP version1. Do not read mailbox data
 registers speculatively: those can consume messages.
 
 ## Offline Oscar command framing
 
 The pure `sensors/oscar/packet.py` helper reproduces the matching stock outgoing
-command encoder: bounded14-byte header, at most114payload bytes and independent
-little-endian16-bit checksum spans. Its strict decoder accepts this outgoing
+command encoder: bounded 14-byte header, at most 114 payload bytes and independent
+little-endian 16-bit checksum spans. Its strict decoder accepts this outgoing
 command form only, not arbitrary sensor reports. The emulator comparison passes
 24 synthetic frame cases plus four span-checksum cases and stops before the
 stock transport callback. No UART, firmware boot, accelerometer report decoding
@@ -134,23 +134,35 @@ or automatic rotation is implemented. These sources do not transmit anything.
 
 ## Experimental A7 SIO core adaptation
 
-Orchard hardware commit4f15a70b9c59687fe8cd72b6ea2fbb2823c54d92 supplies
+Orchard hardware commit 4f15a70b9c59687fe8cd72b6ea2fbb2823c54d92 supplies
 reusable S8000/T8010 SIO core and cyclic DMA sources. A7 IOP-v1 uses different
-register offsets: CPU control0x28, AP firmware remap words0x08/0x0c,
-IOP mapping0x10/0x14, size0x18/0x1c, enable0x20; mailbox windows0x1000..
-and time counter0x810/0x818. `audio/derive-iop.py` verifies remap, run-bit,
+register offsets: CPU control 0x28, AP firmware remap words 0x08/0x0c,
+IOP mapping 0x10/0x14, size 0x18/0x1c, enable 0x20; mailbox windows 0x1000..
+and time counter 0x810/0x818. `audio/derive-iop.py` verifies remap, run-bit,
 time-sync and64-bit mailbox operations against exact stock code in emulator
-RAM. A7 stock ready opcode0x6d requires protocol parameter3, matching the
+RAM. A7 stock ready opcode 0x6d requires protocol parameter 3, matching the
 upstream handshake. Shared-region setup still requires live qualification.
 
 The opt-in adaptation patch translates offsets for an experimental exact J86
-compatible and exposes only ADT MCA1 endpoints0x2a/0x2b. It compiles with
--Werror and a complete export table against7.0.12-j86-wifi1. Firmware boot is
+compatible and exposes only ADT MCA1 endpoints 0x2a/0x2b. It compiles with
+-Werror and a complete export table against 7.0.12-j86-wifi1. Firmware boot is
 disabled by default, with board/page/firmware-size guards; it refuses to reset
 an already-running A7 IOP. No DT overlay, module or firmware has been activated.
 The baseline build has no complete export table and is not load-qualified.
 
-The exact stock SmartIO constructor references a464208-byte firmware section.
+The exact stock SmartIO constructor references a 464208-byte firmware section.
 A private extractor verifies the cache hash, module identity, pointer, section
 mapping and length. Firmware remains private and unbooted. No SIO firmware,
 DMA-engine or PCM support is enabled by publishing these experimental sources.
+
+
+The separate build-only 7.0.12-j86-audio1 now compiles the SIO core, cyclic DMA
+and virtual-DMA dependency, including a -Werror rebuild of those transport
+modules. It has no initramfs, RAM payload or boot profile and is unbooted.
+The known-good and Wi-Fi candidate assets remain separate.
+
+A disabled SIO DT overlay resolves the SIO power domain and AIC correctly in a
+host-only merge against the pinned public J86 DT. The new device stays disabled,
+and the base blob is unchanged. This does not qualify live overlay application,
+power ownership, IRQ behavior, firmware boot or audio. A9 MCA-v4 and Mini1
+speaker defaults are not used as J86 MCA/amp configuration.

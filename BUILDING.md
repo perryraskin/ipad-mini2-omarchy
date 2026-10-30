@@ -149,4 +149,18 @@ With Unicorn and the owner cache, run `audio/derive-iop.py KERNELCACHE` for the
 A7 register model. `python3 audio/tools/prepare-sio-firmware.py KERNELCACHE`
 extracts the exact firmware into mode0600 private files. The firmware is not
 boot-qualified. `allow_j86_firmware_boot` is off by default; no live test or
-compatible DT overlay is provided by this source checkpoint.
+live activation workflow is provided by this source checkpoint.
+
+
+`audio/build/prepare-kernel.sh` runs in the ARM64 VM with `J86_TASK_ROOT` set.
+It uses the separately assembled SIO sources and an isolated j86-audio-kernel
+tree, enables DMA_ENGINE/virtual DMA and compiles Image/modules. Transport modules
+are rebuilt with -Werror. Output is **build-only**: no initramfs or RAM payload
+is prepared, and no candidate/default boot selection changes.
+
+`bash audio/sio/tests/disabled-overlay.sh PINNED_J86_DTB` validates the disabled
+DT overlay entirely on the host using dtc/fdtget/fdtoverlay. The required DT SHA
+is checked before work, including the previously unassigned SIO-domain phandle
+and AIC phandle 1. The standalone-overlay warning about that numeric external
+AIC reference is suppressed only because the merged reference is checked against
+the pinned base. No overlay is applied to a live kernel by this test.

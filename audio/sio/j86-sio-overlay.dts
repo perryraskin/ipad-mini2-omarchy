@@ -1,0 +1,33 @@
+/dts-v1/;
+/plugin/;
+/* Exact verified J86 base DT only. The SIO domain currently has no phandle;
+ * the overlay gives it a local reference without changing its power state.
+ * The new device is disabled, and its experimental driver also defaults off.
+ * No loader/activation workflow is supplied or implied by this source.
+ */
+/ {
+ compatible = "apple,j86";
+ fragment@0 {
+  target-path = "/soc/power-management@20e000000/power-controller@20108";
+  j86_sio_power: __overlay__ {
+   #power-domain-cells = <0>;
+  };
+ };
+ fragment@1 {
+  target-path = "/soc";
+  __overlay__ {
+   #address-cells = <2>;
+   #size-cells = <2>;
+   sio@20ae00000 {
+    compatible = "apple,j86-sio-experimental";
+    reg = <0x2 0x0ae00000 0 0x2000>;
+    reg-names = "a7iop";
+    interrupt-parent = <1>;
+    interrupts = <0 133 4>, <0 132 4>, <0 135 4>, <0 134 4>;
+    power-domains = <&j86_sio_power>;
+    firmware-name = "apple/s5l8960x-smartio.bin";
+    status = "disabled";
+   };
+  };
+ };
+};
