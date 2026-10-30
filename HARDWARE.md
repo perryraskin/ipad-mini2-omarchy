@@ -49,3 +49,8 @@ Automatic rotation needs that transport and coordinated display/input transforms
 The running kernel lacks CONFIG_SUSPEND and a qualified A7 platform suspend
 path. Screen blanking does not provide SoC sleep. Physical power/touch/HDMI tests
 remain queued; no internal installation is attempted by this work.
+
+The offline `audio/derive-amplifier.py` model also traces the exact stock
+CS35L19 revision/boost/power/status routines using private owner speaker records.
+The modeled amplifier revision and every fake board/I2C/GPIO callback are
+reported. It neither powers hardware nor supplies SIO playback.
