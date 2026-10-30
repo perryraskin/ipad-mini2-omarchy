@@ -120,3 +120,13 @@ or hardware audio is implemented by this model. The existing Linux ADMAC driver
 is not this A7 SmartIO transport. The owner ADT identifies SIO at0x20ae00000,
 size0x2000, interrupts133/132/135/134 and IOP version1. Do not read mailbox data
 registers speculatively: those can consume messages.
+
+## Offline Oscar command framing
+
+The pure `sensors/oscar/packet.py` helper reproduces the matching stock outgoing
+command encoder: bounded14-byte header, at most114payload bytes and independent
+little-endian16-bit checksum spans. Its strict decoder accepts this outgoing
+command form only, not arbitrary sensor reports. The emulator comparison passes
+24 synthetic frame cases plus four span-checksum cases and stops before the
+stock transport callback. No UART, firmware boot, accelerometer report decoding
+or automatic rotation is implemented. These sources do not transmit anything.

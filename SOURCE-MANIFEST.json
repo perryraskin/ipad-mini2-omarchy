@@ -1,6 +1,6 @@
 {
-  "BUILDING.md": "366c426730096be61cf96ecec5fbe2a1f0067447583a14424e7e677ff58a7635",
-  "HARDWARE.md": "3c7ae4becb85b7795e87c0df6201cc2aca71ee62126f4bedb8937982e2887e50",
+  "BUILDING.md": "c7f96cf0a08ffe08e66696286de492f75459efa2a967a0618d2c40f5387306fb",
+  "HARDWARE.md": "c78ec145b9c54b9424bd21d483334643056a6ca3426db157494f4b638b0859df",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
   "README.md": "c74814bf5af19dd608d07f61e0e1fe5ab1b129757c71b9be4d00e5a645f08687",
   "apps/README.md": "e6a23c7111428bb05f2b84b3a69445811e4f4eebd75fdc565ffdad814785c1ac",
@@ -35,6 +35,9 @@
   "network-command.py": "80f7b17b7f5a65b40be3d155289fe902cf30a3ba6f98bb8b484a5d9c1088a500",
   "research/kernel-4k.config": "e1279fe355501b3d93dca17b45f130112b72355007dd357f2e45dd51398faad5",
   "research/read-prelink.py": "c3fffdb28c1fb87855ba2269e98b19377183a100a85db85a0a155eb7b8a6fc3e",
+  "sensors/oscar/derive-packet.py": "43f95345b99766719552f7a8ffda5d6f9563490c770f992eaf06f725feef9aff",
+  "sensors/oscar/packet.py": "91e1e01307812ae3699597b2e1b44493dde3f799e2fe97b322a03339510bd66d",
+  "sensors/tests/oscar-packet.py": "fec8dd923197353a90a9d8d7bcc8af059fec4c37d6183481de01657598885a44",
   "serve-apps-disk.py": "8f7845974eed38b78b3486222eea33c8a574722e63a84c643f70cf724ed21eb3",
   "serve-root-readonly.py": "a31edb74a4fd44270845dd37e9feaf3573e83f4cb985f09fe83905505ccec860",
   "serve-web-proxy.py": "1001f555020f0fffad3301070e5c0ce59a1ed36c3d233c56b59d3c15c46baff7",

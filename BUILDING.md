@@ -120,3 +120,9 @@ probe/host modules with `bash wifi/build-probes.sh candidate`, copy the resultin
 run `python3 wifi/build/prepare-profile.py`. The profile remains unbooted with
 host disabled and no firmware autostart. A physical DFU test with the known-good
 fallback available is still required; this source companion omits boot assets.
+
+
+Oscar framing fixture tests: `python3 sensors/tests/oscar-packet.py` needs no
+private data. With Unicorn and the matching owner cache,
+`python3 sensors/oscar/derive-packet.py KERNELCACHE` compares the portable encoder
+to stock code in emulator RAM and stops before transport. It never opens UART.
