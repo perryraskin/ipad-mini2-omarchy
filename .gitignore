@@ -13,3 +13,9 @@ research/private-firmware/
 touch/native/assets.json
 desktop/build/*
 !desktop/build/j86-sysroot.ini
+*.trx
+*.dtb
+*.cpio*
+*.img
+*.raw
+*.mtprops

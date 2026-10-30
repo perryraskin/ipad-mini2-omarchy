@@ -26,8 +26,8 @@ Boot-ROM boardtype/rev are 0 and cannot choose an NVRAM vendor variant.
 
 The running kernel lacks wireless support. An inactive candidate adds cfg80211,
 brcmfmacUSB and matching touch/HSIC modules. The experimental USB-ID/firmware
-mapping is compiled but unbooted. Firmware download, exact NVRAM/calibration,
-RF scan and association still require qualification. Stock firmware is seyval
+mapping is compiled but unbooted. RAM firmware/NVRAM transport is qualified by the bounded probes below.
+Per-device RF calibration, scan and association still require qualification. Stock firmware is seyval
 from 4324b5; do not substitute Mini1's BCM4334 firmware.
 
 ## Audio
@@ -54,3 +54,20 @@ The offline `audio/derive-amplifier.py` model also traces the exact stock
 CS35L19 revision/boost/power/status routines using private owner speaker records.
 The modeled amplifier revision and every fake board/I2C/GPIO callback are
 reported. It neither powers hardware nor supplies SIO playback.
+
+## Firmware and private NVRAM qualification
+
+Bounded RAM firmware tests now pass: the stock seyval image reaches postboot
+0xa123 and answers BCDC version/revision queries. Its unconfigured board ID is
+ffff and is not used as hardware identity. Exact-stock RDHW16 OTP reads recover
+the module vendor tag; this device reports `u`, selecting the matching stock
+seyval-u-kk variant. A private TRX with that NVRAM and the live Wi-Fi MAC boots,
+reports expected board ID `0x67e` / revision `0x1303` and passes an owner-MAC comparison without
+logging the address. Each probe removes its temporary host and restores power.
+
+Per-device RF calibration overrides, scan and association are still unqualified.
+The private preparation receipt explicitly says `rf_qualified=false`. No interface
+up, scan or TX command is used by these probes. All firmware, NVRAM, OTP and
+calibration artifacts stay private. The optional OTP snapshot module exposes
+its temporary RAM cache only to root and provides a clear control; it does not
+write OTP or device storage.

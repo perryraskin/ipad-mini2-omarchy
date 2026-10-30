@@ -15,7 +15,8 @@ Verified in a running Hoolock 7.0.12/Pomme session:
   and window menus without a preceding left-click, including a mouse-free seat.
   Synthetic outside-corner drag resizes a window. Physical gesture QA is pending.
 - Internal Wi-Fi chip enumerates at high speed as 0a5c:bd1c; read-only boot-ROM
-  query identifies chip 0x4324/revision6. Association is not working yet.
+  query identifies chip 0x4324/revision6. Stock and vendor-matched NVRAM RAM
+  firmware boot/command tests pass. Association is not working yet.
 
 Audio, native Wi-Fi networking, automatic rotation, GPU acceleration, charging,
 battery reporting and true system suspend remain unfinished. Power handling is

@@ -57,3 +57,21 @@ remain required. Never use iPad internal storage as the writable app layer.
 
 Run `python3 touch/tests/start-profile.py` to verify candidate manifests select
 their own touch module and wrong vermagic refuses before any upload.
+
+## Bounded Wi-Fi builds
+
+Run `wifi/build-probes.sh known-good` or `wifi/build-probes.sh candidate` with
+the corresponding prepared kernel tree. It compiles the corrected PHY and
+bounded enumeration/firmware/OTP probes, generates the aligned overlay header,
+and writes modules only to the host build directory. It never loads or boots.
+
+`wifi/tools/prepare-ram-firmware.py` takes owner stock firmware/NVRAM, live ADT
+and private OTP inputs. It selects the OTP vendor-matched stock variant, inserts
+the live MAC, preserves the firmware body and rebuilds the TRX length/CRC. Its
+output is private and only qualified for an RF-disabled RAM probe. Read the
+module's exact-board/kernel guards and cleanup path before loading anything.
+The optional snapshot sysfs cache must be cleared after private extraction.
+
+Host fixture tests: `python3 wifi/tests/prepare-ram-firmware.py`. These check
+ambiguous vendor rejection, immutable firmware body, CRC/length consistency,
+MAC replacement and malformed-input rejection without proprietary assets.

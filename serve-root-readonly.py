@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Read-only oldstyle NBD server, restricted to the iPad's USB link."""
-import errno,os,pathlib,socket,struct,sys
+import errno,os,pathlib,socket,struct,subprocess,sys
 path=pathlib.Path(sys.argv[1]).resolve(); bind=sys.argv[2]; peer=sys.argv[3]
 fd=os.open(path,os.O_RDONLY); size=os.fstat(fd).st_size
 assert size%4096==0
+# The tethered root cannot survive host idle sleep. Scope the assertion to this
+# server PID; it ends automatically when the server exits. Display may sleep.
+if sys.platform=='darwin':
+ subprocess.Popen(['/usr/bin/caffeinate','-i','-w',str(os.getpid())],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+
 
 def recv_exact(c,n):
  out=bytearray()

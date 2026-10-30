@@ -13,6 +13,12 @@
 #include <linux/usb/hcd.h>
 #include <linux/pm_runtime.h>
 #include "j86_overlay_blob.h"
+#ifdef J86_WIFI_OTP_PROBE
+#include "j86_wifi_otp.h"
+#endif
+#ifdef J86_WIFI_FIRMWARE_PROBE
+#include "j86_wifi_firmware.h"
+#endif
 static bool matches(u32 phandle,const char *path)
 {
  struct device_node *a=of_find_node_by_phandle(phandle),*b=of_find_node_by_path(path);
@@ -36,6 +42,14 @@ static int query_chip(struct usb_device *dev,void *unused)
  rc=usb_control_msg(dev,usb_rcvctrlpipe(dev,0),5,USB_DIR_IN|USB_TYPE_VENDOR|USB_RECIP_INTERFACE,0,0,id,24,1000);
  if(rc>=12)pr_info("j86-wifi-enumeration-probe: bootrom rc=%d chip=%08x revision=%u ram=%u boardtype=%x boardrev=%x\n",rc,le32_to_cpu(id[0]),le32_to_cpu(id[1]),le32_to_cpu(id[2]),le32_to_cpu(id[4]),le32_to_cpu(id[5]));
  else pr_info("j86-wifi-enumeration-probe: bootrom identity request rc=%d\n",rc);
+#ifdef J86_WIFI_OTP_PROBE
+ if(rc==24 && le32_to_cpu(id[0])==0x4324 && le32_to_cpu(id[1])==6)
+  j86_wifi_read_otp(dev);
+#endif
+#ifdef J86_WIFI_FIRMWARE_PROBE
+ if(rc==24 && le32_to_cpu(id[0])==0x4324 && le32_to_cpu(id[1])==6)
+  j86_wifi_ram_firmware(dev);
+#endif
  kfree(id);return 0;
 }
 static void sample(void)
@@ -87,6 +101,9 @@ static int __init j86_wifi_enumeration_probe_init(void)
 out:
  after=readl(power);iounmap(power);
  pr_info("j86-wifi-enumeration-probe: rc=%d power_before=%08x after=%08x restored=%d\n",rc,before,after,after==before);
+#ifdef J86_WIFI_OTP_EXPORT
+ if(!rc && after==before && j86_otp_snapshot_length)return 0;
+#endif
  return rc?rc:(after==before?-ECANCELED:-EIO);
 }
 module_init(j86_wifi_enumeration_probe_init);
