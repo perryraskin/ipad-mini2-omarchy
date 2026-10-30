@@ -48,6 +48,8 @@ if menu.exists():
  existing=json.loads(re.sub(r'^\s*//[^\n]*','',menu.read_text(),flags=re.M))
 for key in ('screensaver','lock','suspend','hibernate','logout','reboot','shutdown'):
  existing['system.'+key]={'when':'false'}
+existing['setup.j86-volume-keys']={'label':'Use volume keys for audio','icon':'󰕾','action':'/home/tablet/.local/bin/j86-screen-control keys-volume'}
+existing['setup.j86-brightness-keys']={'label':'Use volume keys for brightness','icon':'󰃠','action':'/home/tablet/.local/bin/j86-screen-control keys-brightness'}
 existing['setup.j86-rotation']={'label':'Rotate screen','icon':'󰑭','action':'/home/tablet/.local/bin/j86-rotate toggle'}
 existing['system.screenoff']={'label':'Screen off','icon':'󰖔','action':'/home/tablet/.local/bin/j86-screen-control screen-toggle'}
 existing.pop('install.j86-package',None)

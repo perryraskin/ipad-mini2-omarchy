@@ -9,7 +9,7 @@ import argparse,hashlib,importlib.util,pathlib,struct
 from unicorn import Uc,UcError,UC_ARCH_ARM64,UC_MODE_ARM,UC_HOOK_CODE,UC_HOOK_MEM_READ,UC_HOOK_MEM_WRITE
 from unicorn.arm64_const import UC_ARM64_REG_X0,UC_ARM64_REG_X1,UC_ARM64_REG_X2,UC_ARM64_REG_X3,UC_ARM64_REG_X4,UC_ARM64_REG_X5,UC_ARM64_REG_X6,UC_ARM64_REG_X7,UC_ARM64_REG_X30,UC_ARM64_REG_SP,UC_ARM64_REG_PC
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('kernelcache',type=pathlib.Path);parser.add_argument('--nco-model',action='store_true');parser.add_argument('--nco-parent-rate',type=int,default=342857142);args=parser.parse_args()
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('kernelcache',type=pathlib.Path);parser.add_argument('--lifecycle-model',action='store_true');parser.add_argument('--nco-model',action='store_true');parser.add_argument('--nco-parent-rate',type=int,default=342857142);args=parser.parse_args()
 assert hashlib.sha256(args.kernelcache.read_bytes()).hexdigest()=='d173a651d02329a02d2f23c2859e1e54308a5e94da86ba729777efeb3503da08','Expected exact iPad4,5 16H88 stock kernelcache'
 spec=importlib.util.spec_from_file_location('prelink',ROOT/'research/read-prelink.py');helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
 _,segments,data=helper.prelink(args.kernelcache)
@@ -82,6 +82,8 @@ def run(title,descriptor):
  try:
   rc=call(0x863b7fc,obj,0,d);print('configure rc',hex(rc))
   rc=call(0x863c61c,obj,2);print('start TX rc',hex(rc))
+  if args.lifecycle_model:
+   rc=call(0x863c8f8,obj,2);print('stop TX rc',hex(rc))
  except (RuntimeError,UcError) as error:print('INCOMPLETE MODEL:',error,'PC',hex(uc.reg_read(UC_ARM64_REG_PC)))
  for line in log:print(' ',line)
  print('Model only; no playback claim.\n')

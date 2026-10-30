@@ -13,6 +13,7 @@ __pycache__/
 audio/sio/source/
 audio/sio/build/
 audio/build/candidate/
+power/build/
 *.dtbo
 *.ext4
 private-data/

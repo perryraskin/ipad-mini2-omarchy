@@ -44,7 +44,7 @@ app-root service and tests. `serve-apps-disk.py` uses a standard nbdkit backend.
 `audio/` contains bounded inventory, exact-stock offline models, private SIO
 firmware preparation and an experimental core adaptation that is disabled by
 default. There is no qualified playback driver. `sensors/` contains offline
-Oscar command framing; no motion-sensor transport is active.
+Oscar command framing and disabled rotation policy/IIO-reader drafts; no motion-sensor transport is active. `power/` contains a build-only suspend profile and read-only readiness report.
 
 Read [BUILDING.md](BUILDING.md) and [HARDWARE.md](HARDWARE.md) before using these
 sources. None of the scripts should be treated as a generic Apple-device port.
@@ -64,3 +64,5 @@ Touch protocol/SPI references: Cascadia commit
 `e8f3e045a5e38bde5a5a79e1cc72ae22020d63ac`, modpunk Omarchy-iPhone6s commit
 `ed2a4584caa8bcf908d1958d791242932da8e26c`, and Hoolock SPI tests commit
 `001939843409a0b27d5fd81a2d020d6779be2770`. Original file notices are retained.
+
+Host-only A7 MCA register adaptation is documented in [audio/mca/README.md](audio/mca/README.md). The single ordered physical validation queue is [HANDS-ON-QUEUE.md](HANDS-ON-QUEUE.md). New experiments remain disabled; host checks do not qualify hardware.

@@ -164,3 +164,28 @@ is checked before work, including the previously unassigned SIO-domain phandle
 and AIC phandle 1. The standalone-overlay warning about that numeric external
 AIC reference is suppressed only because the merged reference is checked against
 the pinned base. No overlay is applied to a live kernel by this test.
+
+
+## Host-only preparation checkpoint
+
+Compile the A7 register-plan backend without device access:
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror audio/mca/tests/plan.c -o /tmp/j86-mca-plan
+/tmp/j86-mca-plan
+python3 desktop/tests/session-keys.py
+python3 sensors/tests/rotation-policy.py
+python3 sensors/tests/iio-source.py
+python3 wifi/tests/stage-driver-firmware.py
+python3 power/tests/preflight.py
+```
+
+`wifi/tools/stage-driver-firmware.py --prepared-dir PRIVATE_PREPARED_DIR --output NEW_PRIVATE_DIR`
+creates a new host directory with the driver filename and a disabled receipt.
+It does not stage firmware into a device/rootfs. Inputs remain private.
+
+After preparing the audio kernel, run `power/prepare-suspend-kernel.sh` inside
+the same Linux ARM64 build environment with J86_TASK_ROOT set. It creates a
+separate source/output tree and leaves the audio and Wi-Fi build assets alone.
+No boot payload/profile or suspend activation is generated. Budget several GB
+of additional build space. See power/README.md for the NBD-root restriction.

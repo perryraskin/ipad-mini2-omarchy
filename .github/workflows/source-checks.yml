@@ -17,3 +17,9 @@ jobs:
       - run: python wifi/tests/calibration.py
       - run: python sensors/tests/oscar-packet.py
       - run: python tests/network-deadline.py
+      - run: python desktop/tests/session-keys.py
+      - run: python sensors/tests/rotation-policy.py
+      - run: python sensors/tests/iio-source.py
+      - run: python wifi/tests/stage-driver-firmware.py
+      - run: python power/tests/preflight.py
+      - run: cc -std=c11 -Wall -Wextra -Werror audio/mca/tests/plan.c -o /tmp/j86-mca-plan && /tmp/j86-mca-plan

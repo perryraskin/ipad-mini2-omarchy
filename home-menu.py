@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exact J86 session keys. Screen off is not SoC suspend."""
-import argparse,glob,os,pathlib,select,socket,struct,subprocess,time
+import argparse,glob,os,pathlib,re,select,socket,struct,subprocess,time
 
 class PowerButton:
  def __init__(self,short,long):
@@ -14,6 +14,23 @@ class PowerButton:
  def tick(self,now):
   if self.started is not None and not self.fired and now-self.started>=1.2:
    self.fired=True;self.long()
+
+class VolumeKeys:
+ """RAM-only mode; audio never silently falls back to backlight control."""
+ def __init__(self,brightness,volume):
+  self.mode='brightness';self.brightness=brightness;self.volume=volume
+ def command(self,command):
+  if command=='keys-brightness':self.mode='brightness'
+  elif command=='keys-volume':self.mode='volume'
+  else:return False
+  return True
+ def event(self,code):
+  (self.volume if self.mode=='volume' else self.brightness)(1 if code==115 else -1)
+
+def native_audio_sink(inspect):
+ return bool(re.search(r'media\.class\s*=\s*"Audio/Sink"',inspect) and
+             re.search(r'api\.alsa\.path\s*=\s*"[^"\n]+"',inspect) and
+             not re.search(r'node\.name\s*=\s*"auto_null"',inspect))
 
 def main():
  parser=argparse.ArgumentParser(description=__doc__)
@@ -32,9 +49,19 @@ def main():
   try:print('Brightness readback:',original,'->',brightness(max(1,original-64)),flush=True)
   finally:brightness(original)
   return
- def shell(*command):
-  return subprocess.run(['/usr/bin/setpriv','--reuid=1000','--regid=1000','--init-groups','/usr/bin/env','HOME=/home/tablet','XDG_RUNTIME_DIR=/run/user/1000','OMARCHY_PATH=/home/tablet/.local/share/omarchy-ipad','PATH=/home/tablet/.local/bin:/usr/local/bin:/usr/bin',*command],timeout=8)
+ def shell(*command,capture_output=False):
+  return subprocess.run(['/usr/bin/setpriv','--reuid=1000','--regid=1000','--init-groups','/usr/bin/env','HOME=/home/tablet','XDG_RUNTIME_DIR=/run/user/1000','OMARCHY_PATH=/home/tablet/.local/share/omarchy-ipad','PATH=/home/tablet/.local/bin:/usr/local/bin:/usr/bin',*command],timeout=8,capture_output=capture_output,text=capture_output)
  def menu(name):shell('/usr/local/bin/omarchy-shell','shell','summon','omarchy.menu','{"menu":"'+name+'"}')
+ def key_brightness(direction):
+  current=int((backlight/'brightness').read_text())
+  print('Volume-key brightness:',brightness(max(1,current+maximum//20*direction)),flush=True)
+ def key_volume(direction):
+  # The default sink must exist. wpctl failures must not change brightness.
+  sink=shell('/usr/bin/wpctl','inspect','@DEFAULT_AUDIO_SINK@',capture_output=True)
+  if sink.returncode or not native_audio_sink(sink.stdout):raise RuntimeError('No native ALSA sink; volume unchanged')
+  result=shell('/usr/bin/wpctl','set-volume','--limit','1.0','@DEFAULT_AUDIO_SINK@','5%+' if direction>0 else '5%-')
+  if result.returncode:raise RuntimeError('No usable PipeWire sink; volume unchanged')
+ volume_keys=VolumeKeys(key_brightness,key_volume)
  saved=None;touch=pathlib.Path('/sys/module/j86_touch/parameters')
  def screen_toggle():
   nonlocal saved
@@ -70,6 +97,7 @@ def main():
        command=server.recv(64)
        if command==b'screen-toggle':screen_toggle()
        elif command==b'power-menu':power_menu()
+       elif volume_keys.command(command.decode('ascii',errors='replace')):print('Volume keys:',volume_keys.mode,flush=True)
        continue
       data=keys.read(event.size)
       if len(data)!=event.size:return
@@ -80,8 +108,7 @@ def main():
        if saved is not None:screen_toggle()
        else:shell('/usr/local/bin/omarchy-shell','shell','toggle','omarchy.menu','{"menu":"root"}')
       elif code in (114,115) and value in (1,2) and saved is None:
-       current=int((backlight/'brightness').read_text())
-       print('Volume-key brightness:',brightness(max(1,current+maximum//20*(1 if code==115 else -1))),flush=True)
+       volume_keys.event(code)
      except (OSError,RuntimeError,subprocess.SubprocessError) as error:print('Key action failed:',error,flush=True)
   finally:
    control.unlink(missing_ok=True)
