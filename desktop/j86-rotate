@@ -1,0 +1,72 @@
+#!/usr/bin/python3
+"""Manual J86 display and touch rotation. Automatic sensing is not implemented."""
+import argparse,fcntl,json,os,pathlib,re,signal,subprocess,time,xml.etree.ElementTree as ET
+MATRICES={'normal':'1 0 0 0 1 0','90':'0 -1 1 1 0 0','180':'-1 0 1 0 -1 1','270':'0 1 0 -1 0 1'}
+CHOICES={'portrait':'normal','landscape':'90','inverted':'180','landscape-inverted':'270'}
+RUNTIME=pathlib.Path('/run/user/1000');HOME=pathlib.Path('/home/tablet')
+def outputs():
+ value=json.loads(subprocess.check_output(['/usr/bin/wlr-randr','--json'],text=True))
+ active=[o for o in value if o['enabled']]
+ if len(active)!=1:raise ValueError('Rotation requires the single native J86 panel')
+ output=active[0]
+ if not any(m.get('current') and (m['width'],m['height'])==(1536,2048) for m in output['modes']):raise ValueError('Unexpected native panel mode')
+ if output['transform'] not in MATRICES or not re.fullmatch('[A-Za-z0-9_-]+',output['name']):raise ValueError('Unsupported output configuration')
+ return output
+
+def compositor():
+ value=os.environ.get('LABWC_PID')
+ if not value:
+  shell=json.loads((RUNTIME/'omarchy-desktop-ready.json').read_text())['shell_pid']
+  for item in pathlib.Path('/proc/'+str(shell)+'/environ').read_bytes().split(b'\0'):
+   if item.startswith(b'LABWC_PID='):value=item.split(b'=',1)[1].decode()
+ if not value or not value.isdecimal():raise ValueError('No verified compositor PID')
+ pid=int(value);exe=os.readlink('/proc/'+str(pid)+'/exe')
+ if exe not in ('/usr/bin/labwc','/run/j86-desktop/build/labwc-j86-long-press'):raise ValueError('Unexpected compositor executable')
+ if pathlib.Path('/proc/'+str(pid)).stat().st_uid!=1000:raise ValueError('Unexpected compositor owner')
+ return pid
+
+def atomic(path,data):
+ temporary=path.with_name(path.name+'.j86-next-'+str(os.getpid()))
+ try:
+  fd=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+  with os.fdopen(fd,'wb') as f:f.write(data);f.flush();os.fsync(f.fileno())
+  os.replace(temporary,path)
+ finally:temporary.unlink(missing_ok=True)
+
+def main():
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('orientation',choices=[*CHOICES,'toggle','restore','status']);a=p.parse_args()
+ if pathlib.Path('/proc/device-tree/model').read_bytes().rstrip(b'\0')!=b'Apple iPad mini 2 (Cellular)' or os.geteuid()!=1000:raise ValueError('Run as the tablet user on exact J86')
+ with (RUNTIME/'j86-rotation.lock').open('w') as lock:
+  fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+  output=outputs();receipt=RUNTIME/'j86-rotation.json'
+  if a.orientation=='status':print(json.dumps({'output':output['name'],'transform':output['transform'],'scale':output['scale'],'automatic':False}));return
+  if a.orientation=='restore':target=json.loads(receipt.read_text())['transform'] if receipt.exists() else 'normal'
+  elif a.orientation=='toggle':target='normal' if output['transform'] in ('90','270') else '90'
+  else:target=CHOICES[a.orientation]
+  if target not in MATRICES:raise ValueError('Invalid saved orientation')
+  pid=compositor();config=HOME/'.config/labwc/rc.xml';before=config.read_bytes();root=ET.fromstring(before)
+  libinput=root.find('libinput')
+  if libinput is None:libinput=ET.SubElement(root,'libinput')
+  devices=[d for d in libinput.findall('device') if d.get('category')=='J86 native touchscreen']
+  if len(devices)>1:raise ValueError('Ambiguous native touch configuration')
+  device=devices[0] if devices else ET.SubElement(libinput,'device',category='J86 native touchscreen')
+  matrix=device.find('calibrationMatrix')
+  if matrix is None:matrix=ET.SubElement(device,'calibrationMatrix')
+  current=matrix.text;matrix.text=MATRICES[target]
+  after=ET.tostring(root,encoding='utf-8')
+  backup=config.with_suffix('.xml.before-j86-rotation')
+  if not backup.exists():atomic(backup,before)
+  if output['transform']!=target or current!=matrix.text:
+   try:
+    atomic(config,after);os.kill(pid,signal.SIGHUP);time.sleep(.15)
+    subprocess.run(['/usr/bin/wlr-randr','--output',output['name'],'--transform',target],check=True)
+    if outputs()['transform']!=target:raise RuntimeError('Display transform was not applied')
+   except Exception:
+    atomic(config,before);os.kill(pid,signal.SIGHUP)
+    subprocess.run(['/usr/bin/wlr-randr','--output',output['name'],'--transform',output['transform']],check=False)
+    raise
+  atomic(receipt,(json.dumps({'transform':target,'automatic':False})+'\n').encode())
+  print('J86 display and native touch rotation:',target,'(manual; sensor transport pending)')
+if __name__=='__main__':
+ try:main()
+ except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:raise SystemExit(str(error))

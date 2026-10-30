@@ -21,7 +21,7 @@ b=Path(sys.argv[1]).read_bytes()
 lines=[",".join("0x%02x"%v for v in b[i:i+12])+"," for i in range(0,len(b),12)]
 Path(sys.argv[2]).write_text("static const unsigned char j86_overlay_blob[] __aligned(8) = {\n"+"\n".join(lines)+"\n};\n")
 PY
-for kind in hsic phy enumeration firmware otp; do
+for kind in hsic phy enumeration firmware otp host; do
  mod="$work/$kind"; mkdir -p "$mod"
  case "$kind" in
  hsic) cp "$J86_TASK_ROOT/wifi/hsic/j86_hsic_range.c" "$J86_TASK_ROOT/wifi/hsic/Makefile" "$mod/"; names=j86_hsic_range;;
@@ -29,6 +29,7 @@ for kind in hsic phy enumeration firmware otp; do
  enumeration) cp "$J86_TASK_ROOT/wifi/enumeration-probe/"*.c "$J86_TASK_ROOT/wifi/enumeration-probe/Makefile" "$mod/"; cp "$work/j86_overlay_blob.h" "$mod/"; names=j86_wifi_enumeration_probe;;
  firmware) cp "$J86_TASK_ROOT/wifi/firmware-probe/"*.c "$J86_TASK_ROOT/wifi/firmware-probe/"*.h "$J86_TASK_ROOT/wifi/firmware-probe/Makefile" "$mod/"; cp "$J86_TASK_ROOT/wifi/enumeration-probe/j86_wifi_enumeration_probe.c" "$mod/j86_wifi_enumeration_base.h"; cp "$work/j86_overlay_blob.h" "$mod/"; names="j86_wifi_firmware_probe j86_wifi_nvram_probe"; printf "obj-m += j86_wifi_firmware_probe.o j86_wifi_nvram_probe.o\n" >"$mod/Makefile";;
  otp) cp "$J86_TASK_ROOT/wifi/otp-probe/"*.c "$J86_TASK_ROOT/wifi/otp-probe/"*.h "$mod/"; cp "$J86_TASK_ROOT/wifi/enumeration-probe/j86_wifi_enumeration_probe.c" "$mod/j86_wifi_enumeration_base.h"; cp "$work/j86_overlay_blob.h" "$mod/"; names="j86_wifi_otp_probe j86_wifi_otp_snapshot"; printf "obj-m += j86_wifi_otp_probe.o j86_wifi_otp_snapshot.o\n" >"$mod/Makefile";;
+ host) cp "$J86_TASK_ROOT/wifi/host/"*.c "$J86_TASK_ROOT/wifi/host/Makefile" "$mod/"; cp "$work/j86_overlay_blob.h" "$mod/"; names=j86_wifi_host;;
  esac
  if [ "$J86_PROFILE" = candidate ]; then
   for source in "$mod/"*.c "$mod/"*.h; do

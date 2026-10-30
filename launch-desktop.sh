@@ -83,6 +83,10 @@ cat >"$R/home/tablet/.config/labwc/autostart" <<'EOF'
 export OMARCHY_PATH=/home/tablet/.local/share/omarchy-ipad
 # Native panel stays1536x2048; 2x scaling gives touch-friendly768x1024.
 wlr-randr --output Unknown-1 --scale 2
+# Restore touch calibration and display orientation together before the shell.
+if [ -x /home/tablet/.local/bin/j86-rotate ]; then
+ /home/tablet/.local/bin/j86-rotate restore || exit 1
+fi
 qs -p "$OMARCHY_PATH/shell/shell.qml" >"$XDG_RUNTIME_DIR/omarchy-shell.log" 2>&1 &
 EOF
 J86_COMPOSITOR=/usr/bin/labwc

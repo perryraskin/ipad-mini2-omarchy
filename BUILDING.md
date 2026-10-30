@@ -75,3 +75,24 @@ The optional snapshot sysfs cache must be cleared after private extraction.
 Host fixture tests: `python3 wifi/tests/prepare-ram-firmware.py`. These check
 ambiguous vendor rejection, immutable firmware body, CRC/length consistency,
 MAC replacement and malformed-input rejection without proprietary assets.
+
+## Offline calibration mapping
+
+`wifi/tools/derive-calibration.py KERNELCACHE LIVE_ADT` needs Unicorn and the
+exact owner-extracted 16H88 cache. It executes the stock DT structure builder
+and NVRAM override-selection body with modeled type/property, append and
+snprintf callbacks. Clock-symbol lookup and final buffer compaction are omitted;
+board mode is modeled as zero. It compares all 31 overrides against the portable
+`wifi/tools/calibration.py` mapping without printing private values. Use
+`--synthetic --synthetic-seed N` for full-range signed test data. An optional
+`--private-output` writes the structure and override JSON as mode0600 files.
+
+`prepare-ram-firmware.py --include-calibration` optionally applies this mapping
+before rebuilding the private TRX. Use a new private output directory. This
+option is off by default and **does not qualify RF**: its output has not been
+booted or used to scan/associate. Unported optional DT formats are rejected.
+The firmware body remains byte-identical. Run `python3 wifi/tests/calibration.py`
+and `python3 wifi/tests/prepare-ram-firmware.py` without proprietary inputs.
+
+`python3 apps/tests/root-readonly.py` exercises actual NBD reads and rejected
+writes against an isolated ephemeral-port server and confirms the image hash.

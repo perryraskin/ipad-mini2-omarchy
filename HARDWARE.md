@@ -71,3 +71,36 @@ up, scan or TX command is used by these probes. All firmware, NVRAM, OTP and
 calibration artifacts stay private. The optional OTP snapshot module exposes
 its temporary RAM cache only to root and provides a clear control; it does not
 write OTP or device storage.
+
+## Reversible host and manual rotation checkpoint
+
+The exact-board Wi-Fi host module starts disabled. Its root-only `enabled`
+parameter adds/removes the reviewed EHCI1 overlay, holds a module reference
+while active, and checks power restoration on stop. Baseline enable/disable
+qualified enumeration of `0a5c:bd1c` and unchanged touch state. Matching candidate
+modules compile; the candidate remains unbooted and firmware autostart is off.
+
+Manual `j86-rotate` coordinates the output transform and the native touchscreen
+calibration matrix. A 90-degree synthetic native-name touch reached the expected
+Wayland surface coordinates. Setup → Rotate screen toggles portrait/landscape;
+the session restores display and input orientation together before launching
+its shell. The 180/270-degree and compositor-restart live checks were interrupted
+when the USB device disappeared; they are not qualified. Physical alignment and
+motion-sensor automatic rotation remain pending.
+
+The root NBD server rejects writes and holds a Mac idle-sleep assertion only
+while a client is connected. An isolated real-protocol test verifies reads,
+EROFS on writes and an unchanged backing file. The existing mounted session
+uses the older server process; this source change takes effect on its next start.
+
+## Offline RF calibration mapping
+
+The exact-stock structure builder and NVRAM-selection body now produce the same
+31 overrides as a portable signed conversion/permutation. Comparison passes for
+owner live calibration and five full-range synthetic seeds. The 24 PA fields
+replace stock defaults; seven RSSI gain-delta groups are added. All values remain
+private. An opt-in preparation path builds a private TRX with those overrides,
+unchanged firmware bytes and valid CRC. No live test has used this image.
+Clock metadata lookup and final stock buffer compaction are omitted by the
+model; board mode is explicitly modeled as zero. RF qualification, firmware
+acceptance, scan and association remain development/physical-test work.

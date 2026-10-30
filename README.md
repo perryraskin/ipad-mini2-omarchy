@@ -14,6 +14,8 @@ Verified in a running Hoolock 7.0.12/Pomme session:
 - Opt-in Labwc long-press right-click: synthetic native-touch tests open Firefox
   and window menus without a preceding left-click, including a mouse-free seat.
   Synthetic outside-corner drag resizes a window. Physical gesture QA is pending.
+- Manual landscape display and touch transform agree in a synthetic test;
+  physical rotation and session-restart QA remain pending.
 - Internal Wi-Fi chip enumerates at high speed as 0a5c:bd1c; read-only boot-ROM
   query identifies chip 0x4324/revision6. Stock and vendor-matched NVRAM RAM
   firmware boot/command tests pass. Association is not working yet.

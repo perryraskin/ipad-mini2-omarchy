@@ -10,6 +10,7 @@ assert ipaddress.ip_address(host).is_link_local
 bin=home/'.local/bin';bin.mkdir(parents=True,exist_ok=True)
 shutil.copyfile(source/'j86-screen-control',bin/'j86-screen-control');(bin/'j86-screen-control').chmod(0o755)
 shutil.copyfile(source/'j86-apps',bin/'j86-apps');(bin/'j86-apps').chmod(0o755)
+shutil.copyfile(source/'j86-rotate',bin/'j86-rotate');(bin/'j86-rotate').chmod(0o755)
 profile=home/'.mozilla/firefox/j86-usb';profile.mkdir(parents=True,exist_ok=True)
 (profile/'user.js').write_text((source/'firefox-user.js').read_text().replace('169.254.21.15',host))
 (bin/'j86-browser').write_text('#!/bin/sh\nexport MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1\nexec /usr/bin/firefox --profile /home/tablet/.mozilla/firefox/j86-usb "$@"\n')
@@ -47,6 +48,7 @@ if menu.exists():
  existing=json.loads(re.sub(r'^\s*//[^\n]*','',menu.read_text(),flags=re.M))
 for key in ('screensaver','lock','suspend','hibernate','logout','reboot','shutdown'):
  existing['system.'+key]={'when':'false'}
+existing['setup.j86-rotation']={'label':'Rotate screen','icon':'󰑭','action':'/home/tablet/.local/bin/j86-rotate toggle'}
 existing['system.screenoff']={'label':'Screen off','icon':'󰖔','action':'/home/tablet/.local/bin/j86-screen-control screen-toggle'}
 existing.pop('install.j86-package',None)
 for name in ('ai','service','development','editor','style','gaming','browser','webapp','terminal','tui','windows','aur','preinstalls'):

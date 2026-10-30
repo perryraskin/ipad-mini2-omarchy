@@ -23,6 +23,12 @@ for nvram,mac in ((b'boardtype=1\nboardtype=2',bytes([2,0,0,0,0,1])),(b'boardtyp
  try:m.prepare(bytes(fw),nvram,mac)
  except ValueError:pass
  else:raise AssertionError('Invalid NVRAM/MAC accepted')
+props={'tx-calibration-2.4':struct.pack('<6h',-32768,-1,32767,7,-8,9),'tx-calibration-5.0':bytes(36),'rx-calibration-2.4':bytes(54),'rx-calibration-5.0':bytes(32)}
+calibrated,fields=m.prepare(bytes(fw),b'boardtype=0x67e\npa2gw0a0=99\n',bytes([2,0,0,0,0,1]),props)
+assert fields['pa2gw0a0']=='32767' and calibrated.count(b'pa2gw0a0=32767\0')==1
+assert b'pa2gw0a0=99\0' not in calibrated
+assert calibrated[28:482052]==fw[28:482052]
+assert (zlib.crc32(calibrated[12:])^0xffffffff)==struct.unpack_from('<I',calibrated,8)[0]
 fw[-1]^=1;m.FIRMWARE_SHA=hashlib.sha256(fw).hexdigest()
 try:m.prepare(bytes(fw),b'boardtype=1',bytes([2,0,0,0,0,1]))
 except ValueError as error:assert 'CRC' in str(error)

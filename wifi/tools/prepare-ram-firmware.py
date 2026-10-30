@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prepare private exact-J86 TRX+NVRAM for a RAM-only, RF-disabled qualification probe.
 
-Does not flash or connect. Per-device RF calibration overlays are not implemented;
+Does not flash or connect. Optional exact-board calibration remains RF-unqualified;
 this artifact must not be used to qualify scanning, association or transmission.
 """
 import argparse,hashlib,importlib.util,json,os,pathlib,re,struct,zlib
@@ -22,7 +22,7 @@ def otp_vendor(raw):
   pos+=size
  if len(vendors)!=1:raise ValueError('Require one exact OTP vendor tag; never guess an NVRAM variant')
  return vendors[0]
-def prepare(firmware,nvram,mac):
+def prepare(firmware,nvram,mac,calibration_props=None):
  magic,length,crc,flags,fwlength,jump,nvlength=struct.unpack_from('<7I',firmware)
  if hashlib.sha256(firmware).hexdigest()!=FIRMWARE_SHA or (magic,length,flags,fwlength,nvlength)!=(0x30524448,483328,0x10020,482024,0):raise ValueError('Unexpected stock firmware')
  if (zlib.crc32(firmware[12:])^0xffffffff)!=crc:raise ValueError('Stock TRX CRC mismatch')
@@ -35,6 +35,9 @@ def prepare(firmware,nvram,mac):
   key,value=line.split('=',1);key=key.strip();value=value.strip()
   if key in fields or not re.fullmatch('[A-Za-z0-9_]+',key) or '\0' in value:raise ValueError('Invalid/duplicate NVRAM field')
   fields[key]=value
+ if calibration_props is not None:
+  spec=importlib.util.spec_from_file_location('j86_calibration',ROOT/'wifi/tools/calibration.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  fields.update(module.derive(calibration_props))
  fields['macaddr']=':'.join('%02x'%x for x in mac)
  variables=b'\0'.join((k+'='+v).encode('ascii') for k,v in fields.items())+b'\0\0'
  variables+=bytes((-len(variables))%4)
@@ -45,7 +48,7 @@ def prepare(firmware,nvram,mac):
  return bytes(image),fields
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--firmware-dir',type=pathlib.Path,required=True);p.add_argument('--live-adt',type=pathlib.Path,required=True);p.add_argument('--otp',type=pathlib.Path,required=True);p.add_argument('--output-dir',type=pathlib.Path,default=ROOT/'private-data/wifi-ram-probe');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--firmware-dir',type=pathlib.Path,required=True);p.add_argument('--live-adt',type=pathlib.Path,required=True);p.add_argument('--otp',type=pathlib.Path,required=True);p.add_argument('--include-calibration',action='store_true',help='Apply offline stock-model-validated DT mapping; RF remains unqualified');p.add_argument('--output-dir',type=pathlib.Path,default=ROOT/'private-data/wifi-ram-probe');a=p.parse_args()
  spec=importlib.util.spec_from_file_location('adt',ROOT/'touch/tools/prepare-assets.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
  nodes=m.adt_nodes(a.live_adt.read_bytes());assert b'J86AP' in nodes['/device-tree']['compatible'].split(b'\0')
  props=nodes['/device-tree/arm-io/usb-complex/usb-ehci1/wlan']
@@ -53,15 +56,15 @@ def main():
  vendor=otp_vendor(a.otp.read_bytes());name,expected,boardtype=VARIANTS[vendor]
  nvram=(a.firmware_dir/name).read_bytes()
  if hashlib.sha256(nvram).hexdigest()!=expected:raise ValueError('Unexpected stock NVRAM variant')
- image,fields=prepare((a.firmware_dir/'seyval.trx').read_bytes(),nvram,props['local-mac-address'])
+ image,fields=prepare((a.firmware_dir/'seyval.trx').read_bytes(),nvram,props['local-mac-address'],props if a.include_calibration else None)
  if int(fields['boardtype'],0)!=boardtype:raise ValueError('Stock variant boardtype mismatch')
  a.output_dir.mkdir(parents=True,exist_ok=True,mode=0o700);a.output_dir.chmod(0o700)
  target=a.output_dir/'j86-wifi-seyval-configured-probe.trx'
  fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
  with os.fdopen(fd,'wb') as f:f.write(image)
- receipt={'purpose':'RAM-only RF-disabled probe','rf_qualified':False,'calibration_overrides_applied':False,'otp_vendor':vendor,'stock_nvram':name,'expected_boardtype':boardtype,'expected_boardrev':int(fields['boardrev'],0),'source':str(target.resolve()),'sha256':hashlib.sha256(image).hexdigest(),'size':len(image)}
+ receipt={'purpose':'RAM-only RF-disabled probe','rf_qualified':False,'calibration_overrides_applied':a.include_calibration,'otp_vendor':vendor,'stock_nvram':name,'expected_boardtype':boardtype,'expected_boardrev':int(fields['boardrev'],0),'source':str(target.resolve()),'sha256':hashlib.sha256(image).hexdigest(),'size':len(image)}
  fd=os.open(a.output_dir/'manifest.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
  with os.fdopen(fd,'w') as f:json.dump(receipt,f,indent=2);f.write('\n')
  print('Prepared private',len(image),'byte RAM-only image using OTP vendor',vendor,'and',name)
- print('No RF calibration/association qualification. MAC, data and integrity receipt stay private.')
+ print('RF remains unqualified. Calibration overrides applied:',a.include_calibration,'. Private values and integrity receipt stay local.')
 if __name__=='__main__':main()

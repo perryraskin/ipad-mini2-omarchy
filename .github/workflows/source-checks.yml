@@ -13,3 +13,5 @@ jobs:
       - run: python apps/tests/client-disconnect.py
       - run: python touch/tests/start-profile.py
       - run: python wifi/tests/prepare-ram-firmware.py
+      - run: python apps/tests/root-readonly.py
+      - run: python wifi/tests/calibration.py
