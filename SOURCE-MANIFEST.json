@@ -1,6 +1,6 @@
 {
-  "BUILDING.md": "fd3b4b5090a16216343303c0bd3247c979014188517e4ab69796c19373c2469a",
-  "HARDWARE.md": "a32e685ba29009fc0896f801d69457a1ec5d610e85d4a5bce4919849f6a0fcaa",
+  "BUILDING.md": "9a72b46042ba6241d3357888640d3ea5ad0f96255fb8a71d567fefb5110a7284",
+  "HARDWARE.md": "3c7ae4becb85b7795e87c0df6201cc2aca71ee62126f4bedb8937982e2887e50",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
   "README.md": "c74814bf5af19dd608d07f61e0e1fe5ab1b129757c71b9be4d00e5a645f08687",
   "apps/README.md": "e6a23c7111428bb05f2b84b3a69445811e4f4eebd75fdc565ffdad814785c1ac",
@@ -17,6 +17,7 @@
   "audio/controller-probe/j86_audio_controller_probe.c": "8fc2cb2bf5ca2b92792cc059632f655592e8801d8f9bf9ac42132ca8d3eebea4",
   "audio/derive-amplifier.py": "eac2521a591c48c80f4d01a2336795a32fc0711d04d928557cc1bcf5d5a5bd22",
   "audio/derive-mca.py": "9ad55e4bbc4bc8edbe4a85461914c8658fe51f540fff03ddcded8223d3f8fe5c",
+  "audio/derive-sio.py": "c0daf5c7443bb5277fdb0687fb51375513d8caadd0838a8845d340ab446438dc",
   "desktop/build.sh": "f6d37c9a0a5e482d61638812c7a1e6e52c860976d3afd56d717397f023bce1ae",
   "desktop/build/j86-sysroot.ini": "37458be8980312bce92465397568967ff6dd53bad840a2eea711cd2990829dc1",
   "desktop/configure-session.py": "0bab293a8a5eb2dbc96eb9b62d6801c43e1a585841dab3fd044ffbc1049793f6",

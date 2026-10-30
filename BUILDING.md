@@ -96,3 +96,8 @@ and `python3 wifi/tests/prepare-ram-firmware.py` without proprietary inputs.
 
 `python3 apps/tests/root-readonly.py` exercises actual NBD reads and rejected
 writes against an isolated ephemeral-port server and confirms the image hash.
+
+
+Run `audio/derive-sio.py KERNELCACHE --scenario success` with Unicorn and the
+matching owner cache. Repeat with `no-slot` and `submit-error` to verify modeled
+cleanup. It uses only synthetic DMA configuration and never accesses a device.

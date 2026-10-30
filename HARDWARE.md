@@ -104,3 +104,19 @@ unchanged firmware bytes and valid CRC. No live test has used this image.
 Clock metadata lookup and final stock buffer compaction are omitted by the
 model; board mode is explicitly modeled as zero. RF qualification, firmware
 acceptance, scan and association remain development/physical-test work.
+
+## Offline SIO DMA transport model
+
+`audio/derive-sio.py` executes the exact stock SmartIO DMA configuration and
+setParam routines using synthetic data. Configuration opcode5 references shared
+configuration storage; parameter opcode3 carries parameter10 and a modeled FIFO
+depth128. The model checks field placement and successful reply0x65, plus command
+and shared-slot cleanup after modeled allocation/submission failures. It has
+passed success, no-slot and submit-error cases. Command pools, shared-slot
+allocation, firmware replies and transport success are explicit fakes.
+
+No SIO firmware boot, shared-memory DMA mapping, interrupts, cyclic PCM transport
+or hardware audio is implemented by this model. The existing Linux ADMAC driver
+is not this A7 SmartIO transport. The owner ADT identifies SIO at0x20ae00000,
+size0x2000, interrupts133/132/135/134 and IOP version1. Do not read mailbox data
+registers speculatively: those can consume messages.
