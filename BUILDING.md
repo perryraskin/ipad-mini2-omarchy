@@ -101,3 +101,22 @@ writes against an isolated ephemeral-port server and confirms the image hash.
 Run `audio/derive-sio.py KERNELCACHE --scenario success` with Unicorn and the
 matching owner cache. Repeat with `no-slot` and `submit-error` to verify modeled
 cleanup. It uses only synthetic DMA configuration and never accesses a device.
+
+
+## Inactive candidate packaging
+
+The candidate scripts keep the known-good payload and kernel tree separate.
+After supplying verified base assets and their local hash manifests, recover the
+pinned initramfs with `python3 wifi/build/recover-initramfs.py`. In the ARM64 VM,
+set `J86_TASK_ROOT` to the shared project path and run `wifi/build/prepare-kernel.sh`
+then `wifi/build/package-kernel.sh`. These compile cfg80211/brcmfmacUSB and ALSA,
+package matching modules into the isolated initramfs and build matching touch/PHY
+sidecars. They do not boot or install anything.
+
+Back on the host, run `python3 wifi/build/make-ramboot.py` to preserve the verified
+loader/DT/bootargs and replace only the kernel gzip stream. Build candidate Wi-Fi
+probe/host modules with `bash wifi/build-probes.sh candidate`, copy the resulting
+`wifi/build/probes/candidate/j86_wifi_host.ko` into `wifi/build/candidate/`, then
+run `python3 wifi/build/prepare-profile.py`. The profile remains unbooted with
+host disabled and no firmware autostart. A physical DFU test with the known-good
+fallback available is still required; this source companion omits boot assets.
