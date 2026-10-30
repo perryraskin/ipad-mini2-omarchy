@@ -1,0 +1,38 @@
+{
+  "repo": "OrchardLinux/hardware",
+  "commit": "4f15a70b9c59687fe8cd72b6ea2fbb2823c54d92",
+  "patches": [
+    {
+      "path": "kernel/patches/import/pauli1go/0008-dt-bindings-dma-Apple-SIO.patch",
+      "sha256": "fed18255cb6cab6a1f2bf747d7ede018f8d9989190bbf85c7c3f570e79759239"
+    },
+    {
+      "path": "kernel/patches/import/pauli1go/0009-soc-apple-add-SIO-core.patch",
+      "sha256": "461b4441008b3505d71ab6e7349c8e2dbab7a405829a6908edaeb117e50f6f69"
+    },
+    {
+      "path": "kernel/patches/import/pauli1go/0010-dmaengine-apple-add-SIO-DMA-driver.patch",
+      "sha256": "4623018dbbc8707b8a643e2aff5190c38130b9a49ff86a67ccd3ed735a28a20f"
+    },
+    {
+      "path": "kernel/patches/drivers/soc-apple/0001-soc-apple-sio-Only-take-RX-interrupts-while-the-copr.patch",
+      "sha256": "094b47ee92f20c1b6c1346d04ceb3d39ef6cade536664e3c1d636c196ef33f51"
+    },
+    {
+      "path": "kernel/patches/drivers/soc-apple/0002-soc-apple-sio-Allocate-request-tags-per-endpoint.patch",
+      "sha256": "2a28cc3263fbefc6f864a81f6780e912d22857f76b1a72f634995b3648545b47"
+    },
+    {
+      "path": "kernel/patches/drivers/soc-apple/0003-soc-apple-sio-Handle-DMA-errors-and-idle-notificatio.patch",
+      "sha256": "ae5e82e59803cf668613640849e6c7335c739442187df76665a7bfa148fc588a"
+    },
+    {
+      "path": "kernel/patches/drivers/soc-apple/0004-soc-apple-sio-Support-S8000.patch",
+      "sha256": "7981b06a8e63a27884a75fc495812131544b0480db612ac6fbb30592250fce76"
+    },
+    {
+      "path": "kernel/patches/drivers/soc-apple/0005-dmaengine-apple-sio-Support-every-endpoint-cyclic-tr.patch",
+      "sha256": "af56a2eacf3499a887da916354f677b353b8f07295688cc0ba8e1d29ea32b114"
+    }
+  ]
+}

@@ -41,8 +41,10 @@ app-root service and tests. `serve-apps-disk.py` uses a standard nbdkit backend.
 `wifi/hsic/` contains the current exact-range PHY and temporary overlay source.
 `wifi/enumeration-probe/` is a bounded observation, not a persistent Wi-Fi service.
 `wifi/build/patches/` includes an experimental brcmfmac chip/USB-ID mapping.
-`audio/` contains bounded read-only inventory and an offline stock-code model.
-Neither is a playback driver.
+`audio/` contains bounded inventory, exact-stock offline models, private SIO
+firmware preparation and an experimental core adaptation that is disabled by
+default. There is no qualified playback driver. `sensors/` contains offline
+Oscar command framing; no motion-sensor transport is active.
 
 Read [BUILDING.md](BUILDING.md) and [HARDWARE.md](HARDWARE.md) before using these
 sources. None of the scripts should be treated as a generic Apple-device port.

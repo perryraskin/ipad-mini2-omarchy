@@ -132,3 +132,21 @@ to stock code in emulator RAM and stops before transport. It never opens UART.
 a total response deadline under trickling data, send-failure socket cleanup and
 no command replay. A lost acknowledgment does not establish command failure;
 inspect live state before retrying any device mutation.
+
+
+## Experimental A7 SIO build
+
+`python3 audio/sio/prepare-upstream.py --output audio/sio/source` downloads
+hash-pinned public Orchard patches using authenticated `gh`, assembles only the
+core/DMA/header files and applies the J86 patch. Existing output is refused.
+`bash audio/sio/build-core.sh candidate` builds only the experimental core in
+Lima against the matching full candidate export table. It never loads or stages
+anything. Missing export tables are refused rather than allowing unresolved
+symbols. The assembled DMA source still needs a kernel with DMA_ENGINE and
+DMA_VIRTUAL_CHANNELS; those are absent from the current Wi-Fi candidate.
+
+With Unicorn and the owner cache, run `audio/derive-iop.py KERNELCACHE` for the
+A7 register model. `python3 audio/tools/prepare-sio-firmware.py KERNELCACHE`
+extracts the exact firmware into mode0600 private files. The firmware is not
+boot-qualified. `allow_j86_firmware_boot` is off by default; no live test or
+compatible DT overlay is provided by this source checkpoint.

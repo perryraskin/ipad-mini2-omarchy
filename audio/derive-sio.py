@@ -47,7 +47,7 @@ def code(mu,address,size,user):
  if address==FAKE+0x108:
   opcode,slot=struct.unpack('<HI',mu.mem_read(command+0x72,6))
   if phase=='configure':assert (opcode,slot)==(5,2);events.append('configure opcode=5 slot=2')
-  else:assert (opcode,slot)==(0x0a03,128);events.append('parameter opcode=3 parameter=10 value=128 (synthetic FIFO depth)')
+  else:assert (opcode,slot)==(0x0a03,128);events.append('parameter opcode=3 parameter=10 value=128 (synthetic frame size)')
   if args.scenario=='submit-error':events.append('modeled transport submission failure');ret(0xe00002bc);return
   mu.mem_write(command+0x72,struct.pack('<H',0x65));ret();return
  if address==0x83ee8f4:

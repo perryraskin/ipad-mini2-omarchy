@@ -4,6 +4,15 @@ __pycache__/
 *.o
 *.log
 *.bin
+*.trx
+*.dtb
+*.cpio*
+*.img
+*.raw
+*.mtprops
+audio/sio/source/
+audio/sio/build/
+audio/build/candidate/
 *.dtbo
 *.ext4
 private-data/
@@ -13,9 +22,3 @@ research/private-firmware/
 touch/native/assets.json
 desktop/build/*
 !desktop/build/j86-sysroot.ini
-*.trx
-*.dtb
-*.cpio*
-*.img
-*.raw
-*.mtprops

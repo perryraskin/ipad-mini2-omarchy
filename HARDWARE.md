@@ -109,8 +109,8 @@ acceptance, scan and association remain development/physical-test work.
 
 `audio/derive-sio.py` executes the exact stock SmartIO DMA configuration and
 setParam routines using synthetic data. Configuration opcode5 references shared
-configuration storage; parameter opcode3 carries parameter10 and a modeled FIFO
-depth128. The model checks field placement and successful reply0x65, plus command
+configuration storage; parameter opcode3 carries parameter10 and a modeled frame
+size128. The model checks field placement and successful reply0x65, plus command
 and shared-slot cleanup after modeled allocation/submission failures. It has
 passed success, no-slot and submit-error cases. Command pools, shared-slot
 allocation, firmware replies and transport success are explicit fakes.
@@ -130,3 +130,27 @@ command form only, not arbitrary sensor reports. The emulator comparison passes
 24 synthetic frame cases plus four span-checksum cases and stops before the
 stock transport callback. No UART, firmware boot, accelerometer report decoding
 or automatic rotation is implemented. These sources do not transmit anything.
+
+
+## Experimental A7 SIO core adaptation
+
+Orchard hardware commit4f15a70b9c59687fe8cd72b6ea2fbb2823c54d92 supplies
+reusable S8000/T8010 SIO core and cyclic DMA sources. A7 IOP-v1 uses different
+register offsets: CPU control0x28, AP firmware remap words0x08/0x0c,
+IOP mapping0x10/0x14, size0x18/0x1c, enable0x20; mailbox windows0x1000..
+and time counter0x810/0x818. `audio/derive-iop.py` verifies remap, run-bit,
+time-sync and64-bit mailbox operations against exact stock code in emulator
+RAM. A7 stock ready opcode0x6d requires protocol parameter3, matching the
+upstream handshake. Shared-region setup still requires live qualification.
+
+The opt-in adaptation patch translates offsets for an experimental exact J86
+compatible and exposes only ADT MCA1 endpoints0x2a/0x2b. It compiles with
+-Werror and a complete export table against7.0.12-j86-wifi1. Firmware boot is
+disabled by default, with board/page/firmware-size guards; it refuses to reset
+an already-running A7 IOP. No DT overlay, module or firmware has been activated.
+The baseline build has no complete export table and is not load-qualified.
+
+The exact stock SmartIO constructor references a464208-byte firmware section.
+A private extractor verifies the cache hash, module identity, pointer, section
+mapping and length. Firmware remains private and unbooted. No SIO firmware,
+DMA-engine or PCM support is enabled by publishing these experimental sources.
