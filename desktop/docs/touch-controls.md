@@ -30,3 +30,15 @@ Build with `desktop/build.sh` after mounting the verified root **read-only** at
 `/mnt/j86-sysroot` in the existing ARM64 Linux VM. Native build tools are Meson,
 Ninja, GCC, pkg-config and wayland-scanner. The result is staged separately as
 `labwc-rebuilt`; building does not replace or restart the active compositor.
+
+October31 regression: Perry confirmed missed physical taps with the original
+long-press candidate and reliable taps with stock Labwc. The candidate now
+flushes a native touch frame after deferred down, before release; real-handler
+tests pass, but physical tap/hold qualification is pending. Do not treat the
+old synthetic results as physical qualification.
+
+`desktop/window-bar.qml` provides a separate bottom panel using the standard
+wlr-foreign-toplevel protocol instead of the Hyprland-only upstream dock.
+Every open window remains listed when minimized; tap to unminimize and activate.
+The 48logical-pixel buttons scroll horizontally when the row fills. Perry
+physically confirmed minimized-window restoration October31.

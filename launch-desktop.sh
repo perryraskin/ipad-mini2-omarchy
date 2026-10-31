@@ -87,6 +87,7 @@ wlr-randr --output Unknown-1 --scale 2
 if [ -x /home/tablet/.local/bin/j86-rotate ]; then
  /home/tablet/.local/bin/j86-rotate restore || exit 1
 fi
+qs -p /run/j86-desktop/window-bar.qml >"$XDG_RUNTIME_DIR/j86-window-bar.log" 2>&1 &
 qs -p "$OMARCHY_PATH/shell/shell.qml" >"$XDG_RUNTIME_DIR/omarchy-shell.log" 2>&1 &
 EOF
 J86_COMPOSITOR=/usr/bin/labwc

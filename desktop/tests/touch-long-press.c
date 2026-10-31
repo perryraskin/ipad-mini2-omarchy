@@ -7,7 +7,8 @@
 #include "src/input/touch.c"
 struct server server;
 struct rcxml rc;
-static int left_down,left_up,right_down,right_up,cancels,native_ups,focus_updates,native_downs,native_motions;
+static int left_down,left_up,right_down,right_up,cancels,native_ups,focus_updates,native_downs,native_motions,native_frames;
+void wlr_seat_touch_notify_frame(struct wlr_seat *seat){native_frames++;}
 void cursor_update_focus(void){focus_updates++;}
 uint32_t wlr_seat_touch_notify_down(struct wlr_seat *seat,struct wlr_surface *surface,uint32_t time,int32_t id,double x,double y){native_downs++;return 1;}
 void wlr_seat_touch_notify_motion(struct wlr_seat *seat,uint32_t time,int32_t id,double x,double y){native_motions++;}
@@ -52,7 +53,7 @@ int main(void){
  reset_counts();down(&seat,&touch,11);struct touch_point *native=point(&seat);native->surface=&surface;native->pending_press=false;native->surface_destroy.notify=handle_point_surface_destroy;wl_signal_add(&surface.events.destroy,&native->surface_destroy);handle_hold(native);assert(cancels==1&&right_down==1&&!left_down&&focus_updates>0);up(&seat,&touch,11);assert(native_ups==0);
  reset_counts();down(&seat,&touch,12);native=point(&seat);native->surface=&surface;native->pending_press=false;native->surface_destroy.notify=handle_point_surface_destroy;wl_signal_add(&surface.events.destroy,&native->surface_destroy);wl_signal_emit_mutable(&surface.events.destroy,&surface);assert(wl_list_empty(&seat.touch_points)&&!right_down);
  reset_counts();down(&seat,&touch,13);native=point(&seat);native->surface=&surface;native->pending_press=false;native->pending_native=true;native->surface_destroy.notify=handle_point_surface_destroy;wl_signal_add(&surface.events.destroy,&native->surface_destroy);handle_hold(native);assert(right_down==1&&!left_down&&native_downs==0&&cancels==1);up(&seat,&touch,13);assert(native_ups==0);
- reset_counts();down(&seat,&touch,14);native=point(&seat);native->surface=&surface;native->pending_press=false;native->pending_native=true;native->surface_destroy.notify=handle_point_surface_destroy;wl_signal_add(&surface.events.destroy,&native->surface_destroy);up(&seat,&touch,14);assert(native_downs==1&&native_ups==1&&!left_down);
+ reset_counts();down(&seat,&touch,14);native=point(&seat);native->surface=&surface;native->pending_press=false;native->pending_native=true;native->surface_destroy.notify=handle_point_surface_destroy;wl_signal_add(&surface.events.destroy,&native->surface_destroy);up(&seat,&touch,14);assert(native_downs==1&&native_ups==1&&!left_down&&native_frames==1);
  reset_counts();down(&seat,&touch,15);native=point(&seat);native->surface=&surface;native->pending_press=false;native->pending_native=true;native->surface_destroy.notify=handle_point_surface_destroy;wl_signal_add(&surface.events.destroy,&native->surface_destroy);move(&seat,&touch,15,.505);assert(native_downs==1&&native_motions==0);move(&seat,&touch,15,.6);assert(native_downs==2&&native_motions==1&&!native->hold_timer);up(&seat,&touch,15);assert(native_ups==2);
  wl_client_destroy(client);close(sockets[1]);
  unsetenv("LABWC_TOUCH_LONG_PRESS_MS");reset_counts();down(&seat,&touch,9);assert(left_down==1&&!point(&seat)->hold_timer);up(&seat,&touch,9);assert(left_up==1);

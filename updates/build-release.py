@@ -19,7 +19,7 @@ def build(root,tag,commit):
     member=tarfile.TarInfo(name);member.size=len(data);member.mode=0o644;member.mtime=0;member.uid=member.gid=0
     archive.addfile(member,io.BytesIO(data))
  bundle=output.getvalue()
- receipt={'schema':1,'repository':'perryraskin/ipad-mini2-linux','kind':'source-only','tag':tag,'commit':commit,'boot_qualified':False,'size':len(bundle),'sha256':hashlib.sha256(bundle).hexdigest()}
+ receipt={'schema':1,'repository':'perryraskin/ipad-mini2-omarchy','kind':'source-only','tag':tag,'commit':commit,'boot_qualified':False,'size':len(bundle),'sha256':hashlib.sha256(bundle).hexdigest()}
  return bundle,receipt
 
 def main():

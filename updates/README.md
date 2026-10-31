@@ -1,7 +1,7 @@
 # Inactive Mac-side checkpoint updates
 
 There is no autonomous OTA service and no on-device installer. The explicit CLI
-checks only `perryraskin/ipad-mini2-linux` GitHub source-checkpoint releases.
+checks only `perryraskin/ipad-mini2-omarchy` GitHub source-checkpoint releases.
 Downloads remain inactive. Updates change Mac workspace source files only;
 no code executes, no services restart, no default RAM profile changes, and no
 internal iPad storage is accessed. This is the notify-and-update fallback while

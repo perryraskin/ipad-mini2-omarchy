@@ -6,7 +6,7 @@ explicit, verifies the old manifest, backs up changed files and never runs code,
 restarts services, changes boot selection or writes iPad storage.
 """
 import argparse,fcntl,gzip,hashlib,io,json,os,pathlib,re,tarfile,tempfile,time,urllib.request
-REPO='perryraskin/ipad-mini2-linux'
+REPO='perryraskin/ipad-mini2-omarchy'
 TAG=re.compile(r'source-checkpoint-[0-9]{8}\.[0-9]+')
 ASSETS={'source-checkpoint.tar.gz','checkpoint.json'}
 HOSTS={'api.github.com','github.com','release-assets.githubusercontent.com','objects.githubusercontent.com'}

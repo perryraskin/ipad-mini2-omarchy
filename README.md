@@ -1,4 +1,4 @@
-# iPad mini 2 J86 Linux bring-up
+# iPad mini 2 Omarchy
 
 Experimental source companion for a tethered Omarchy A RAM desktop on
 **iPad4,5 / J86AP (A7), 4 KiB pages**. This is not a standalone installer or a
