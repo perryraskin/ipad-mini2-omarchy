@@ -43,3 +43,10 @@ wlr-foreign-toplevel protocol instead of the Hyprland-only upstream dock.
 Every open window remains listed when minimized; tap to unminimize and activate.
 The 48logical-pixel buttons scroll horizontally when the row fills. Perry
 physically confirmed minimized-window restoration October31.
+
+Window title buttons now use48logical-pixel width/height with2pixels of
+vertical title padding through the RAM-home `themerc-override`. This keeps
+controls finger-sized across Omarchy theme changes. Rendering is verified;
+physical drag/resize qualification is pending. A landscape-sized viewer
+retained a width beyond the portrait output, leaving controls off-screen;
+portrait Terminal is being used to separate window geometry from touch input.

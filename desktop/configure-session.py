@@ -23,6 +23,14 @@ mime=home/'.config/mimeapps.list';cfg=configparser.ConfigParser();cfg.read(mime)
 if not cfg.has_section('Default Applications'):cfg.add_section('Default Applications')
 for kind in ('text/html','x-scheme-handler/http','x-scheme-handler/https'):cfg['Default Applications'][kind]='firefox.desktop'
 with mime.open('w') as f:cfg.write(f)
+# Finger-sized server decorations, independent of the selected Omarchy theme.
+override=home/'.config/labwc/themerc-override'
+text=override.read_text() if override.exists() else ''
+import re
+for key,value in [('window.button.width','48'),('window.button.height','48'),('window.titlebar.padding.height','2')]:
+ text=re.sub(r'^'+re.escape(key)+r'\s*:.*\n?', '', text, flags=re.M)
+ text=text.rstrip()+'\n'+key+': '+value+'\n'
+override.write_text(text.lstrip())
 p=home/'.config/labwc/rc.xml';tree=ET.parse(p);root=tree.getroot()
 backup=p.with_suffix('.xml.before-tablet-controls')
 if not backup.exists():shutil.copyfile(p,backup)
