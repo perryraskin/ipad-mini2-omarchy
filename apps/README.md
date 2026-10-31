@@ -74,3 +74,18 @@ Linux integration tests exercise the real UNIX daemon request loop with syntheti
 package/storage operations, including partial requests and uncertain restart.
 
 Explicit installer enablement now requires a fresh5second daemon health handshake with storage fsync/readback; stale socket/readiness files alone cannot expose installs. Old daemons that lack the health command refuse enablement until deliberately deployed/restarted.
+
+October31 live retest: signed swayimg5.7-1 installed with25 packages/upgrades
+(about101MiB downloaded); pacman and the daemon returned exit0 and the
+transaction marker cleared. The installed viewer rendered a PNG in the current
+Wayland session. HTTPS via the Mac SOCKS proxy returned200. A USB-shell request
+timed out during the large update, and Perry reported app-launch freezes with
+two Firefox main processes and high memory/I/O pressure. Closing Firefox
+restored available memory from126MiB to roughly350MiB. Installer exposure was
+revoked again; sustained interactive install latency is not qualified.
+
+The browser launcher now queues concurrent cold starts for30seconds before
+allowing another Firefox invocation, retaining URL arguments for normal remote
+forwarding. The profile disables speculative processes and first-run/new-tab
+pages while retaining browser sandboxing and site isolation. Host and Linux
+concurrency tests pass; live single-browser responsiveness remains to be checked.

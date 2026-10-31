@@ -13,3 +13,9 @@ user_pref("browser.startup.page", 0);
 user_pref("browser.shell.checkDefaultBrowser", false);
 user_pref("browser.aboutwelcome.enabled", false);
 user_pref("browser.tabs.inTitlebar", 0);
+// Avoid speculative processes and first-run pages on the 1 GiB A7 board.
+user_pref("dom.ipc.processPrelaunch.enabled", false);
+user_pref("browser.newtabpage.enabled", false);
+user_pref("browser.startup.homepage", "about:blank");
+user_pref("browser.startup.homepage_override.mstone", "ignore");
+user_pref("browser.startup.firstrunSkipsHomepage", true);

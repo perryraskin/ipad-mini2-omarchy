@@ -1,7 +1,8 @@
 # Suspend preparation, disabled
 
 The existing power-button daemon implements screen-off/wake and a hold menu.
-It does not suspend the SoC. Its volume-key mode is RAM-only and defaults to
+Perry physically confirmed short-press screen-off, a second press waking the
+display, and the held-button power menu on October31. It does not suspend the SoC. Its volume-key mode is RAM-only and defaults to
 brightness; Setup can explicitly select audio and later restore brightness.
 Audio mode uses the tablet user's PipeWire default sink and caps volume at100%.
 Missing sinks fail without changing backlight settings.

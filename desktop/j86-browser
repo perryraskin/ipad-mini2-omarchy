@@ -1,0 +1,19 @@
+#!/usr/bin/python3
+"""Serialize cold Firefox starts while retaining normal remote URL forwarding."""
+import fcntl,os,pathlib,subprocess,sys,time
+
+def launch(command,lock_path,settle=30):
+    # A second click during slow USB-backed startup must wait before invoking
+    # Firefox's own remote/profile-lock handling. Do not drop requested URLs.
+    with pathlib.Path(lock_path).open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        child=subprocess.Popen(command)
+        try:child.wait(timeout=settle)
+        except subprocess.TimeoutExpired:pass
+        fcntl.flock(lock,fcntl.LOCK_UN)
+    return child.wait()
+
+if __name__=='__main__':
+    os.environ.update(MOZ_ENABLE_WAYLAND='1',GDK_BACKEND='wayland',LIBGL_ALWAYS_SOFTWARE='1')
+    runtime=pathlib.Path(os.environ['XDG_RUNTIME_DIR'])
+    raise SystemExit(launch(['/usr/bin/firefox','--profile','/home/tablet/.mozilla/firefox/j86-usb',*sys.argv[1:]],runtime/'j86-browser-start.lock'))

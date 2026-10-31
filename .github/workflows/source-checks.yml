@@ -31,3 +31,4 @@ jobs:
       - run: python tests/boot-profile.py
       - run: python updates/tests/update.py
       - run: python tests/usb-readiness.py
+      - run: python desktop/tests/browser-start.py
