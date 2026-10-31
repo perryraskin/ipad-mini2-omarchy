@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Start the separately stored J86 app overlay for the verified RAM session."""
-import argparse,base64,hashlib,io,pathlib,re,socket,subprocess,sys,tarfile,time
+import argparse,base64,hashlib,io,pathlib,re,shlex,socket,subprocess,sys,tarfile,time
 ROOT=pathlib.Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from sessionlib import config,network,network_checked
 parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--enable-installer',action='store_true',help='Explicit opt-in after write-path qualification');args=parser.parse_args()
@@ -10,6 +10,27 @@ network_checked('rm -f /mnt/omarchy/run/j86-apps-installer-enabled')
 if network('uname -r').strip()!='7.0.12-gdfa4d4208131-dirty':raise SystemExit('Build the matching OverlayFS module before enabling apps on this kernel.')
 image=ROOT/'private-data/apps-overlay.ext4'
 if not image.is_file() or image.is_symlink():raise SystemExit('Dedicated apps disk is missing')
+def enable_installer():
+ # An existing filesystem socket/readiness file is not proof of a live daemon.
+ # The explicit opt-in must get a fresh bounded fsync/readback health response.
+ code="""import pathlib,socket,time
+with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as client:
+ client.settimeout(5);client.connect('/run/j86-apps.sock');client.sendall(b'{"action":"health"}\\n')
+ deadline=time.monotonic()+5;response=b''
+ while True:
+  remaining=deadline-time.monotonic()
+  if remaining<=0:raise SystemExit('Storage health deadline expired')
+  client.settimeout(remaining);part=client.recv(1024)
+  if not part:break
+  response+=part
+  if len(response)>4096:raise SystemExit('Unexpected health response')
+ if response!=b'J86_STORAGE_HEALTHY\\nEXIT:0\\n':raise SystemExit('Storage health refused installer enablement')
+ if not pathlib.Path('/run/j86-apps-ready').is_file() or pathlib.Path('/run/j86-apps-transaction.json').exists():raise SystemExit('Storage state changed; installer stays hidden')
+ pathlib.Path('/run/j86-apps-installer-enabled').touch(mode=0o600)
+print('INSTALLER_HEALTH_QUALIFIED')
+"""
+ response=network_checked('busybox chroot /mnt/j86-apps /usr/bin/python -c '+shlex.quote(code),timeout=12)
+ if 'INSTALLER_HEALTH_QUALIFIED' not in response:raise SystemExit('No fresh storage health response; installer stays disabled')
 def backend_ready():
  try:
   with socket.create_connection(('127.0.0.1',10814),timeout=2) as sock:return sock.recv(8)==b'NBDMAGIC'
@@ -54,12 +75,12 @@ client=base64.b64encode((ROOT/'desktop/j86-apps').read_bytes()).decode()
 print(network_checked("set -e\nmkdir -p /mnt/omarchy/home/tablet/.local/bin\nbusybox base64 -d <<'J86_APPS_CLIENT' > /mnt/omarchy/home/tablet/.local/bin/j86-apps\n"+client+"\nJ86_APPS_CLIENT\nchmod 755 /mnt/omarchy/home/tablet/.local/bin/j86-apps\nchown 1000:1000 /mnt/omarchy/home/tablet/.local/bin/j86-apps"),end='')
 if network('test -S /mnt/omarchy/run/j86-apps.sock && echo PRESENT').strip():
  if args.enable_installer:
-  network_checked('test -f /mnt/omarchy/run/j86-apps-ready && test ! -e /mnt/omarchy/run/j86-apps-transaction.json && touch /mnt/omarchy/run/j86-apps-installer-enabled')
+  enable_installer()
  print('App service socket already present; preserving it. Installer opt-in:',args.enable_installer);raise SystemExit(0)
 print(network('busybox chroot /mnt/j86-apps /usr/bin/python /run/j86-apps-daemon.py >/mnt/omarchy/run/j86-apps.log 2>&1 </dev/null &\necho APPS_SERVICE_REQUESTED'),end='')
 for _ in range(10):
  if network('test -S /mnt/omarchy/run/j86-apps.sock && test -f /mnt/omarchy/run/j86-apps-ready && echo READY').strip():
-  if args.enable_installer:network_checked('test ! -e /mnt/omarchy/run/j86-apps-transaction.json && touch /mnt/omarchy/run/j86-apps-installer-enabled')
+  if args.enable_installer:enable_installer()
   print('App service ready. Installer opt-in:',args.enable_installer);break
  time.sleep(.25)
 else:raise SystemExit(network('tail -15 /mnt/omarchy/run/j86-apps.log'))

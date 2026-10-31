@@ -88,7 +88,7 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
   while True:
    client,_=server.accept()
    with client:
-    client.settimeout(5)
+    client.settimeout(5);action=None
     try:
      _,uid,_=struct.unpack('3i',client.getsockopt(socket.SOL_SOCKET,socket.SO_PEERCRED,12))
      if uid not in (0,1000):raise ValueError('Wrong desktop user')
@@ -102,7 +102,12 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
       raw+=part
      client.settimeout(2)
      req=json.loads(raw.split(b'\n',1)[0]);action=req.get('action');name=req.get('name','')
-     if action=='install':
+     if action=='health':
+      if TRANSACTION.exists():raise ValueError('Transaction active or uncertain; installer remains disabled')
+      storage_health()
+      READY.write_text('J86 app storage ready\n');os.chmod(READY,0o644)
+      client.sendall(b'J86_STORAGE_HEALTHY\nEXIT:0\n')
+     elif action=='install':
       if not re.fullmatch(r'[a-z0-9][a-z0-9+_.@-]*',name):raise ValueError('Enter one repository package name')
       if not INSTALLER.is_file():raise ValueError('Installer is disabled; explicitly qualify and enable the Mac write path first')
       READY.unlink(missing_ok=True)
@@ -130,7 +135,7 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
       client.sendall(b'Application launch requested.\nEXIT:0\n')
      else:raise ValueError('Unknown app action')
     except (OSError,ValueError,KeyError,RuntimeError,configparser.Error) as error:
-     if TRANSACTION.exists():READY.unlink(missing_ok=True);INSTALLER.unlink(missing_ok=True)
+     if action=='health' or TRANSACTION.exists():READY.unlink(missing_ok=True);INSTALLER.unlink(missing_ok=True)
      try:client.sendall((str(error)+'\nEXIT:1\n').encode())
      except OSError:pass
  finally:

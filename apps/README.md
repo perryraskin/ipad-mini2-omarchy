@@ -72,3 +72,5 @@ userspace timeout: the finite NBD timeout, bounded dirty writeback, separate Mac
 disk and fail-closed installer gate remain necessary. No claim of zero stalls.
 Linux integration tests exercise the real UNIX daemon request loop with synthetic
 package/storage operations, including partial requests and uncertain restart.
+
+Explicit installer enablement now requires a fresh5second daemon health handshake with storage fsync/readback; stale socket/readiness files alone cannot expose installs. Old daemons that lack the health command refuse enablement until deliberately deployed/restarted.
