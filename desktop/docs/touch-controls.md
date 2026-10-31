@@ -34,7 +34,8 @@ Ninja, GCC, pkg-config and wayland-scanner. The result is staged separately as
 October31 regression: Perry confirmed missed physical taps with the original
 long-press candidate and reliable taps with stock Labwc. The candidate now
 flushes a native touch frame after deferred down, before release; real-handler
-tests pass, but physical tap/hold qualification is pending. Do not treat the
+tests pass. Perry then physically confirmed reliable quick taps and the
+title-bar hold menu together. This revised binary is the active default. Do not treat the
 old synthetic results as physical qualification.
 
 `desktop/window-bar.qml` provides a separate bottom panel using the standard
