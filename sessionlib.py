@@ -1,25 +1,34 @@
-import glob,json,os,pathlib,re,select,socket,subprocess,termios,time,uuid
+import errno,glob,json,os,pathlib,re,select,socket,subprocess,termios,time,uuid
 ROOT=pathlib.Path(__file__).resolve().parent
 STATE=ROOT/'session.json'
 
 def config():
  return json.loads(STATE.read_text())
 
-def discover_network():
- text=subprocess.check_output(['networksetup','-listallhardwareports'],text=True)
- match=re.search(r'Hardware Port: pomme USB bring-up gadget\nDevice: (\w+)',text)
- if not match:raise RuntimeError('Linux USB network not found; finish the RAM boot first.')
- interface=match.group(1)
- info=subprocess.check_output(['ifconfig',interface],text=True)
- ips=re.findall(r'\binet (169\.254\.\d+\.\d+)',info)
- if not ips:raise RuntimeError('USB adapter has no link-local IPv4 address yet. Wait for macOS network setup, then rerun.')
+def discover_network(timeout=20):
+ deadline=time.monotonic()+timeout
+ while True:
+  text=subprocess.check_output(['networksetup','-listallhardwareports'],text=True)
+  match=re.search(r'Hardware Port: pomme USB bring-up gadget\nDevice: (\w+)',text)
+  ips=[]
+  if match:
+   interface=match.group(1)
+   info=subprocess.check_output(['ifconfig',interface],text=True)
+   ips=re.findall(r'\binet (169\.254\.\d+\.\d+)',info)
+  if ips:break
+  if time.monotonic()>=deadline:raise RuntimeError('USB network/link-local address did not become ready; inspect macOS network setup, not DFU')
+  time.sleep(.25)
  host=ips[0];octets=host.split('.');octets[-1]=str(int(octets[-1])+1 if int(octets[-1])<254 else int(octets[-1])-1)
  value={'interface':interface,'host_ip':host,'device_ip':'.'.join(octets)}
  STATE.write_text(json.dumps(value,indent=2)+'\n');return value
 
 def serial(command,timeout=15):
- ports=glob.glob('/dev/cu.usbmodempomme*')
- if len(ports)!=1:raise RuntimeError('Expected one pomme USB serial port, got '+str(ports))
+ deadline=time.monotonic()+10
+ while True:
+  ports=glob.glob('/dev/cu.usbmodempomme*')
+  if len(ports)==1:break
+  if len(ports)>1 or time.monotonic()>=deadline:raise RuntimeError('Expected one pomme USB serial port, got '+str(ports))
+  time.sleep(.2)
  fd=os.open(ports[0],os.O_RDWR|os.O_NOCTTY|os.O_NONBLOCK)
  try:
   a=termios.tcgetattr(fd);a[0]=a[1]=a[3]=0;a[2]|=termios.CLOCAL|termios.CREAD
@@ -38,14 +47,21 @@ def serial(command,timeout=15):
  finally:os.close(fd)
 
 def network(command,timeout=40,binary=False):
- c=config();s=socket.socket();s.settimeout(5)
- try:
-  s.setsockopt(socket.IPPROTO_IP,25,socket.if_nametoindex(c['interface']))
-  s.bind((c['host_ip'],0));s.connect((c['device_ip'],23))
- except OSError as e:
-  s.close()
-  if e.errno==65:raise RuntimeError('macOS refused USB network access. Enable T3 Code in System Settings > Privacy & Security > Local Network. Do not redo DFU for this error.') from e
-  raise
+ c=config();connect_deadline=time.monotonic()+5
+ while True:
+  s=socket.socket();s.settimeout(max(.05,connect_deadline-time.monotonic()))
+  try:
+   s.setsockopt(socket.IPPROTO_IP,25,socket.if_nametoindex(c['interface']))
+   s.bind((c['host_ip'],0));s.connect((c['device_ip'],23))
+   break
+  except OSError as e:
+   s.close()
+   if e.errno==65:raise RuntimeError('macOS refused USB network access. Enable T3 Code in System Settings > Privacy & Security > Local Network. Do not redo DFU for this error.') from e
+   # BusyBox respawns its single nc listener after each command. A refused
+   # connect sent no command bytes, so waiting for that listener is safe.
+   # Never retry after connection/send, where execution could be uncertain.
+   if e.errno!=errno.ECONNREFUSED or time.monotonic()>=connect_deadline:raise
+   time.sleep(.1)
  marker='DONE_'+uuid.uuid4().hex
  script='exec 2>&1\n'+command+"\nprintf '\\n"+marker+"\\n'\nexit\n"
  data=b''

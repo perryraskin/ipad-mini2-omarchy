@@ -41,3 +41,15 @@ except BrokenPipeError:pass
 else:raise AssertionError('Send failure was hidden')
 assert client.closed and client.sends==1
 print('PASS: fragmented ACK, total deadline, failure cleanup and no command replay')
+
+# A refused TCP handshake is safe to retry: no command bytes were sent.
+clock[0]=0;first=Fixture();second=Fixture();created=[]
+def refused(*args):raise ConnectionRefusedError(m.errno.ECONNREFUSED,'listener respawning')
+first.connect=refused
+m.time=types.SimpleNamespace(monotonic=lambda:clock[0],sleep=lambda delay:clock.__setitem__(0,clock[0]+delay))
+def new_socket():
+ value=first if not created else second;created.append(value);return value
+m.socket=types.SimpleNamespace(socket=new_socket,if_nametoindex=lambda _:1,IPPROTO_IP=0,TCP_NODELAY=1)
+assert m.network('one execution only')=='fixture result'
+assert first.closed and first.sends==0 and second.closed and second.sends==1 and len(created)==2
+print('PASS: refused pre-send connection waits for listener, with one command execution')

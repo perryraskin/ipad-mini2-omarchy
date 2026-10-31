@@ -97,7 +97,7 @@ def start():
    result=subprocess.run([sys.executable,str(ROOT/'boot-pongo.py')])
    if 'PongoOS USB Device' not in usb():
     input('Reconnect Lightning without pressing buttons, then press Enter: ')
-    if 'PongoOS USB Device' not in usb():
+    if not wait_usb('PongoOS USB Device',10):
      if result.returncode==0:raise RuntimeError('Pongo upload returned success but no console appeared. Inspect the iPad screen before retrying.')
      subprocess.run([sys.executable,str(ROOT/'boot-pongo.py')],check=True)
    if not wait_usb('PongoOS USB Device',8):

@@ -76,3 +76,11 @@ After a source update, explicitly restart/deploy the reviewed services only duri
 this live session. Confirm the new package gate and volume mode after deployment;
 source apply alone does not reload the iPad or switch its RAM boot. The updater
 must never be used as an iPad filesystem/package updater.
+
+
+Recovery checkpoint, 2026-10-31: known-good RAM boot restored; live native touch
+reports state2, the Omarchy shell has a ready receipt, root NBD2 is read-only,
+and the app service is ready with installs hidden. Mac root serving holds an
+idle-sleep assertion while connected. Physical tap/button confirmation remains
+pending. Both loader USB handoffs may need separate cable reconnects; the Pongo
+logo can lag its upload, so do not infer iOS boot from the Apple logo alone.

@@ -30,3 +30,4 @@ jobs:
       - run: python apps/tests/installer-gate.py
       - run: python tests/boot-profile.py
       - run: python updates/tests/update.py
+      - run: python tests/usb-readiness.py
