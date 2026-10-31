@@ -7,7 +7,7 @@ storage. New Wi-Fi/audio/motion/suspend code is inactive by default. Candidate
 builds are experiments, not a daily-use release. Stop a stage on unexpected
 output and retain its logs before advancing.
 
-Completed October31: known-good RAM desktop recovered; scale2 taps physically confirmed reliable with stock Labwc. New bottom window bar physically confirmed to restore minimized apps. Long-press compositor tap-frame fix passes handler tests; Perry confirmed reliable quick taps and title-bar hold menu together.
+Completed October31: known-good RAM desktop recovered; scale2 taps physically confirmed reliable with stock Labwc. New bottom window bar physically confirmed to restore minimized apps. Long-press compositor tap-frame fix passes handler tests; Perry confirmed reliable quick taps and title-bar hold menu together. Perry also confirmed short Power screen-off, wake, and held Power menu. True SoC suspend remains unqualified.
 
 1. **Reconnect and recover the known-good session.** Reconnect the qualified
    USB-A-to-Lightning cable through the Mac adapter. Inspect USB, network/serial,
