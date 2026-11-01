@@ -44,8 +44,15 @@ and created wlan0. No credentials or firmware are published.
 The stock root regulatory database/signature were copied to RAM firmware
 storage. `start-networkmanager.sh` is an explicit experiment, never autorun:
 NetworkManager profiles and state are tmpfs, USB root networking is strictly
-unmanaged, and DNS-file management is disabled. A native rescan returned27
-network rows; no association, DHCP, DNS or native HTTPS qualification yet.
+unmanaged. A native rescan returned 27 network rows. Perry connected through
+the touch UI; association and DHCP succeeded. The read-only root originally
+had an empty resolver file, causing the Limited access status. A RAM resolver
+bind populated from DHCP DNS fixed this: HTTPS to archlinux.org returned 200
+with curl explicitly bound to wlan0 and all proxies bypassed; NetworkManager's
+connectivity check returned full. Setup refreshes numeric DHCP DNS addresses
+in RAM every three seconds, including after network changes; teardown removes
+the resolver bind before detaching the root. Browser native-path qualification
+and long-duration Wi-Fi/touch coexistence remain pending.
 The driver reports missing optional CLM/txcap blobs, so available channels
 may be limited. Do not replace board data or guess regulatory limits.
 

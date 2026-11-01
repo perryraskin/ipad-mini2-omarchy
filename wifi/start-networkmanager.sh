@@ -29,6 +29,29 @@ match-device=interface-name:wlan0
 managed=1
 wifi.backend=wpa_supplicant
 CONF
+# The root is read-only: keep libc DNS in RAM and refresh DHCP DNS on changes.
+[ -f "$R/etc/resolv.conf" ] && [ ! -L "$R/etc/resolv.conf" ]
+if ! grep -q " $R/etc/resolv.conf " /proc/mounts; then
+ : >"$R/run/NetworkManager/j86-resolv.conf"
+ chmod 644 "$R/run/NetworkManager/j86-resolv.conf"
+ mount -o bind "$R/run/NetworkManager/j86-resolv.conf" "$R/etc/resolv.conf"
+fi
+cat >"$R/run/NetworkManager/j86-dns.sh" <<'DNS'
+#!/bin/sh
+set -eu
+while :; do
+ if /usr/bin/nmcli -g IP4.DNS,IP6.DNS device show wlan0 > /run/NetworkManager/j86-dns.next 2>/dev/null; then
+  # Accept numeric resolver addresses only; never put network text into commands.
+  awk 'length($0) && $0 ~ /^[0-9a-fA-F:.%]+$/ {print "nameserver " $0}' /run/NetworkManager/j86-dns.next > /run/NetworkManager/j86-resolv.next
+  if ! cmp -s /run/NetworkManager/j86-resolv.next /run/NetworkManager/j86-resolv.conf; then
+   # Preserve the inode used by the bind mount.
+   cat /run/NetworkManager/j86-resolv.next > /run/NetworkManager/j86-resolv.conf
+  fi
+ fi
+ sleep 3
+done
+DNS
+busybox chroot "$R" /bin/sh /run/NetworkManager/j86-dns.sh >"$R/run/NetworkManager/j86-dns.log" 2>&1 </dev/null &
 # Preserve existing policy files, then add only this RAM-session desktop grant.
 mkdir -p "$R/run/j86-polkit-rules"
 cp -a "$R/etc/polkit-1/rules.d/." "$R/run/j86-polkit-rules/"
