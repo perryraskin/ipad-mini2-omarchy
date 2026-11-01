@@ -119,3 +119,8 @@ client menu's Smaller window action was physically confirmed. A compositor
 fix keeps deferred mouse presses at the original edge through initial jitter;
 its handler regression failed before the fix and passes afterward. The new
 build is running for a physical corner-drag check; not yet qualified.
+
+Perry confirmed corner dragging resizes Terminal with the edge-press fix.
+Landscape aligned taps, titlebar dragging, Smaller window menu and corner resizing
+are now physically confirmed for this build. Full four-orientation cycle remains
+pending; do not infer automatic rotation or suspend qualification.
