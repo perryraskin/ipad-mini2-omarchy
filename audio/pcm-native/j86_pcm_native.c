@@ -47,6 +47,7 @@ static struct snd_dma_buffer pcm_buf;
 static struct work_struct playback_work;
 static struct workqueue_struct *playback_queue;
 static bool dma_submitted;
+static unsigned int pending_slots;
 static unsigned int phase;
 module_param(phase,uint,0400);
 static bool running,poisoned,opened,prepared,handed_off;
@@ -162,12 +163,30 @@ static int submit(unsigned int slot,unsigned int period)
  u32 *h=(u32 *)transport.desc0+(8+slot*8)*3;
  dma_addr_t a=pcm_buf.addr+period*PERIOD;
  memset(h,0,7*12);h[15]=1;h[18]=lower_32_bits(a);h[19]=upper_32_bits(a);h[20]=PERIOD;
- return send_cmd(6,2+slot,8+slot*8);
+ {int rc=send_cmd(6,2+slot,8+slot*8);if(!rc)pending_slots|=BIT(slot);return rc;}
+}
+static int stop_dma(void)
+{
+ unsigned long deadline=jiffies+msecs_to_jiffies(500);bool stopped=false;int rc;
+ rc=send_cmd(8,15,0);if(rc)return rc;
+ do{
+  u64 msg;unsigned int tag,op,param,value;
+  rc=receive(&msg);if(rc==-EAGAIN){usleep_range(50,100);continue;}if(rc)return rc;
+  tag=(msg>>8)&255;op=(msg>>16)&255;param=(msg>>24)&255;value=msg>>32;
+  if(op==0x65 && tag==15 && value==8){stopped=true;}
+  else if(op==0x65 && (tag==2||tag==3) && value==6){}
+  else if(op==0x68 && (tag==2||tag==3) && param==0x80 &&
+          (value==PERIOD||value==(u32)-32) && (pending_slots&BIT(tag-2)))pending_slots&=~BIT(tag-2);
+  else return -EPROTO;
+  if(stopped&&!pending_slots)return 0;
+ }while(time_before(jiffies,deadline));
+ return -ETIMEDOUT;
 }
 static void run_playback(struct work_struct *work)
 {
  unsigned int index[2]={0,1},next=2,expected=0;int rc=0,stoprc;
  unsigned long deadline;struct snd_pcm_substream *s=READ_ONCE(stream);
+ if(!s){rc=-EINVAL;poisoned=true;WRITE_ONCE(running,false);goto cleanup;}
  WRITE_ONCE(phase,3);
  deadline=jiffies+msecs_to_jiffies(500);
  while(READ_ONCE(running)){
@@ -184,6 +203,7 @@ static void run_playback(struct work_struct *work)
   if(!(param&0x80))continue;
   if(tag!=2&&tag!=3){rc=-EPROTO;break;}
   slot=tag-2;
+  pending_slots&=~BIT(slot);
   if(index[slot]!=expected||(u32)(msg>>32)!=PERIOD){rc=-EPROTO;break;}
   expected=(expected+1)%PERIODS;WRITE_ONCE(hw_pos,expected*(PERIOD/4));++periods_done;
   snd_pcm_period_elapsed(s);
@@ -194,10 +214,11 @@ static void run_playback(struct work_struct *work)
   deadline=jiffies+msecs_to_jiffies(500);
  }
  if(!READ_ONCE(running)&&rc==-EAGAIN)rc=0;
+cleanup:
  /* Stop DMA before releasing any backing storage (which is retained anyway). */
  if(amp_attempted){int a;for(a=0;a<2;++a)if(bus)wr(a,0x10,0x19,255);}
  WRITE_ONCE(phase,4);
- if(dma_submitted){stoprc=send_cmd(8,15,0);if(!stoprc)stoprc=ack(15,8);if(stoprc){poisoned=true;if(!rc)rc=stoprc;}}
+ if(dma_submitted){stoprc=stop_dma();if(stoprc){poisoned=true;if(!rc)rc=stoprc;}}
  stoprc=prepared?restore_hw():0;prepared=false;if(stoprc){poisoned=true;if(!rc)rc=stoprc;}
  dma_submitted=false;
  ++stops;WRITE_ONCE(result,rc);WRITE_ONCE(phase,5);
@@ -217,7 +238,7 @@ static int pcm_open(struct snd_pcm_substream *s)
  if(poisoned||handed_off){rc=-EIO;goto out;}
  s->runtime->hw=hardware;
  rc=snd_pcm_hw_constraint_integer(s->runtime,SNDRV_PCM_HW_PARAM_PERIODS);
- if(!rc){WRITE_ONCE(stream,s);WRITE_ONCE(opened,true);}
+ if(rc>=0){WRITE_ONCE(stream,s);WRITE_ONCE(opened,true);rc=0;}
 out:mutex_unlock(&owner_lock);return rc;
 }
 static int pcm_close(struct snd_pcm_substream *s)
@@ -264,7 +285,7 @@ static int pcm_trigger(struct snd_pcm_substream *s,int cmd)
  }
 fail:
  WRITE_ONCE(running,false);WRITE_ONCE(phase,4);
- if(dma_submitted){stoprc=send_cmd(8,15,0);if(!stoprc)stoprc=ack(15,8);if(stoprc)poisoned=true;}
+ if(dma_submitted){stoprc=stop_dma();if(stoprc)poisoned=true;}
  stoprc=restore_hw();prepared=false;if(stoprc)poisoned=true;
  dma_submitted=false;++stops;WRITE_ONCE(result,rc);WRITE_ONCE(phase,5);
  pr_err(TAG "synchronous start failed %d poisoned=%d\n",rc,poisoned);

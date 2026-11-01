@@ -69,3 +69,21 @@ Read-only module `phase`:0 initial,1 starting,2 hardware started/worker queued,
 start/stop counters; it is not proof of audible output. Run future exercisers as
 bounded background processes with log/PID capture so a blocked PCM call does not
 occupy the only network command shell. Inspect the existing process before retry.
+
+## Confirmed callback bug and STOP cancellation evidence
+
+The live diagnostic trace exposed a null substream in the worker. The open callback
+incorrectly stored its substream only when `snd_pcm_hw_constraint_integer` returned
+zero; ALSA also returns a positive value for successful refinement. The corrected
+callback accepts all nonnegative results, records the substream, and returns zero.
+`tests/open.py` executes the actual callback with0,1 and negative return values.
+This fixes a regression introduced during source-driver consolidation; the earlier
+private v2 that produced audible output did not have that condition.
+
+A live STOP tail also contained opcode0x68/tag3/parameter0x80/value0xffffffe0,
+a canceled buffer completion arriving after STOP ACK. Cleanup now tracks submitted
+slots and waits for their success/cancellation completions plus STOP ACK. The actual
+stop routine passes tests with both event orders, missing completions and unowned
+tags. These fixes build successfully but await fresh-boot hardware qualification;
+the diagnostic worker fault means the current boot must not be reused. No forced
+handoff, firmware reload or internal-storage write is part of recovery.

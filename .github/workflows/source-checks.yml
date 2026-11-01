@@ -42,3 +42,5 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - run: cc -Wall -Wextra -Werror audio/pcm-native/test-playback.c -lasound -lm -o /tmp/j86-playback-test
       - run: cc -std=c11 -Wall -Wextra -Werror audio/sio/native-transport/tests/plan.c -o /tmp/j86-native-setup && /tmp/j86-native-setup
+      - run: python audio/pcm-native/tests/open.py
+      - run: python audio/pcm-native/tests/stop.py
