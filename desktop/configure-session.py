@@ -71,4 +71,5 @@ for base in (bin,profile,apps,home/'.config'):
  for current,dirs,files in os.walk(base):
   os.chown(current,1000,1000)
   for name in files:os.chown(pathlib.Path(current)/name,1000,1000,follow_symlinks=False)
+subprocess.run(['/usr/bin/python',str(source/'configure-window-controls.py')],check=True)
 print('RAM browser profile, larger window resize areas and power menu configured.')

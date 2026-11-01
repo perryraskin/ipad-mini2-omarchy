@@ -16,7 +16,7 @@ index 27e6a26..1422bd9 100644
  void touch_finish(struct seat *seat);
  
 diff --git a/src/input/touch.c b/src/input/touch.c
-index 31a3ea4..0a4c088 100644
+index 31a3ea4..a0078a6 100644
 --- a/src/input/touch.c
 +++ b/src/input/touch.c
 @@ -1,7 +1,10 @@
@@ -148,7 +148,7 @@ index 31a3ea4..0a4c088 100644
  static struct wlr_surface *
  touch_get_coords(struct seat *seat, struct wlr_touch *touch, double x, double y,
  		double *x_offset, double *y_offset)
-@@ -91,7 +198,22 @@ handle_touch_motion(struct wl_listener *listener, void *data)
+@@ -91,7 +198,26 @@ handle_touch_motion(struct wl_listener *listener, void *data)
  	struct touch_point *touch_point;
  	wl_list_for_each(touch_point, &seat->touch_points, link) {
  		if (touch_point->touch_id == event->touch_id) {
@@ -166,12 +166,16 @@ index 31a3ea4..0a4c088 100644
 +     touch_point->emulated_down = true;
 +    }
 +   }
++   /* Keep the press hit-test at the original decoration/resize edge.
++    * Sub-threshold jitter must not move the pointer off a narrow target
++    * before the deferred BTN_LEFT is emitted. */
++   if (touch_point->pending_press) return;
  			if (touch_point->surface) {
 +    if (touch_point->pending_native) return;
  				/* Convert coordinates: first [0, 1] => layout */
  				double lx, ly;
  				wlr_cursor_absolute_to_layout_coords(seat->cursor,
-@@ -142,9 +264,40 @@ handle_touch_down(struct wl_listener *listener, void *data)
+@@ -142,9 +268,40 @@ handle_touch_down(struct wl_listener *listener, void *data)
  	touch_point->touch_id = event->touch_id;
  	touch_point->x_offset = x_offset;
  	touch_point->y_offset = y_offset;
@@ -212,7 +216,7 @@ index 31a3ea4..0a4c088 100644
  
  	/* hide the cursor when starting touch input */
  	cursor_set_visible(seat, /* visible */ false);
-@@ -177,15 +330,22 @@ handle_touch_down(struct wl_listener *listener, void *data)
+@@ -177,15 +334,22 @@ handle_touch_down(struct wl_listener *listener, void *data)
  			wlr_cursor_warp_absolute(seat->cursor, &event->touch->base,
  				event->x, event->y);
  		}
@@ -237,7 +241,7 @@ index 31a3ea4..0a4c088 100644
  	}
  }
  
-@@ -201,16 +361,24 @@ handle_touch_up(struct wl_listener *listener, void *data)
+@@ -201,16 +365,24 @@ handle_touch_up(struct wl_listener *listener, void *data)
  	struct touch_point *touch_point, *tmp;
  	wl_list_for_each_safe(touch_point, tmp, &seat->touch_points, link) {
  		if (touch_point->touch_id == event->touch_id) {
@@ -264,7 +268,7 @@ index 31a3ea4..0a4c088 100644
  			break;
  		}
  	}
-@@ -228,6 +396,8 @@ touch_init(struct seat *seat)
+@@ -228,6 +400,8 @@ touch_init(struct seat *seat)
  void
  touch_finish(struct seat *seat)
  {

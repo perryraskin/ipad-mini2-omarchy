@@ -112,3 +112,10 @@ Earlier October31 checks (current results below supersede pending status): known
 Follow the numbered order for remaining hands-on checks. Do not repeat completed
 DFU or firmware steps solely because an earlier paragraph described them as pending.
 Source updates do not reload the running iPad or change its RAM-boot profile.
+
+Window controls follow-up: Perry confirmed landscape taps and titlebar dragging
+after a touch restart, but could not resize by corner. The new touch-sized
+client menu's Smaller window action was physically confirmed. A compositor
+fix keeps deferred mouse presses at the original edge through initial jitter;
+its handler regression failed before the fix and passes afterward. The new
+build is running for a physical corner-drag check; not yet qualified.
