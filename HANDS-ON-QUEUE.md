@@ -89,3 +89,9 @@ Keep credentials, firmware, calibration and identifying traces private.
 - Oscar receive observation previously saw no bytes and restored power. Sensor
   streaming remains unqualified. The suspend diagnostic payload is build-only.
   HDMI and Bluetooth are unqualified and retain the priority above.
+
+Latest audio follow-up: corrected ALSA open now transfers a complete 48,000-frame
+muted stream. STOP cleanup still failed with -EPROTO; the stopped RX diagnostic
+found no queued events. Handling of Orchard channel-idle notifications and STOP
+packet diagnostics now builds and passes host regressions, but needs a fresh
+RAM boot and live drain/drop/restart tests. Stable audio remains unqualified.

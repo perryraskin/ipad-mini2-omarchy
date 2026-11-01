@@ -177,7 +177,11 @@ static int stop_dma(void)
   else if(op==0x65 && (tag==2||tag==3) && value==6){}
   else if(op==0x68 && (tag==2||tag==3) && param==0x80 &&
           (value==PERIOD||value==(u32)-32) && (pending_slots&BIT(tag-2)))pending_slots&=~BIT(tag-2);
-  else return -EPROTO;
+  /* Orchard SIO: bit7 clear is channel idle; its tag is not a request.
+   * It never retires a pending buffer or substitutes for the STOP ACK. */
+  else if(op==0x68 && !(param&0x80)){}
+  else {pr_err(TAG "unexpected STOP op=%02x tag=%02x param=%02x value=%08x pending=%x ack=%d\n",
+         op,tag,param,value,pending_slots,stopped);return -EPROTO;}
   if(stopped&&!pending_slots)return 0;
  }while(time_before(jiffies,deadline));
  return -ETIMEDOUT;

@@ -6,6 +6,9 @@ a=s.index('static int stop_dma(void)');b=s.index('static void run_playback',a)
 shim='''#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#define TAG "test: "
+#define pr_err(...) fprintf(stderr,__VA_ARGS__)
 typedef uint64_t u64;typedef uint32_t u32;
 #define EAGAIN 11
 #define EPROTO 71
@@ -29,6 +32,18 @@ pending_slots=3;pos=0;count=4;messages[0]=msg(0x65,3,0,6);messages[1]=msg(0x68,2
 assert(stop_dma()==0&&pending_slots==0&&pos==4);
 pending_slots=1;pos=0;count=1;messages[0]=msg(0x65,15,0,8);assert(stop_dma()==-ETIMEDOUT&&pending_slots==1);
 pending_slots=1;pos=0;count=1;messages[0]=msg(0x68,3,128,(u32)-32);assert(stop_dma()==-EPROTO);
+/* Idle tags are meaningless, including tags outside the descriptor set. */
+for(unsigned t=0;t<256;++t){
+ pending_slots=3;pos=0;count=5;
+ messages[0]=msg(0x68,t,0,0);messages[1]=msg(0x65,15,0,8);
+ messages[2]=msg(0x68,2,128,(u32)-32);messages[3]=msg(0x68,t,1,0);
+ messages[4]=msg(0x68,3,128,(u32)-32);
+ assert(stop_dma()==0&&pending_slots==0&&pos==5);
+}
+pending_slots=1;pos=0;count=2;messages[0]=msg(0x65,15,0,8);messages[1]=msg(0x68,2,0,0);
+assert(stop_dma()==-ETIMEDOUT&&pending_slots==1);
+pending_slots=0;pos=0;count=1;messages[0]=msg(0x68,15,0,0);
+assert(stop_dma()==-ETIMEDOUT); /* idle is not a STOP ACK */
 return 0;}
 '''
 with tempfile.TemporaryDirectory() as tmp:
