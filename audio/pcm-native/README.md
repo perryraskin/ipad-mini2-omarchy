@@ -1,5 +1,17 @@
 # Native J86 ALSA playback checkpoint
 
+The public driver at a8c6a0e is now live-tested in an isolated J86 RAM boot.
+Prepare-close, normal drain, interrupted playback, restart, a ten-second muted
+stream and another restart all passed. A two-second500Hz tone then passed with
+kernel result0 and7 matching starts/stops; Perry confirmed hearing it clearly.
+This qualifies those bounded speaker-playback/stop cases. Volume controls,
+physical volume keys, desktop audio, touch/Wi-Fi coexistence and sustained
+thermal behavior still need their own qualification. No internal storage was used.
+
+The sections below retain the bring-up history; their older pending/failure
+statements describe earlier revisions, not the result above.
+
+
 Perry clearly heard a two-second 500 Hz tone from the iPad mini 2 speakers through
 ALSA in the isolated `7.0.12-j86-audio2` RAM session. This is physical confirmation,
 not just a successful DMA transfer. The tested private v2 driver completed a
@@ -101,3 +113,8 @@ count played frames or determine retirement. receive still rejects error
 opcodes0x66/0x6a. Normal playback still requires exactly4096bytes per completion.
 Host tests cover opaque STOP data, pending ownership, missing ACK/completions and
 error opcodes. Live qualification of this revision remains pending.
+
+The host-built exerciser additionally supports `--left`, `--right` (bounded
+channel tests) and `--volume-check` (six seconds: two at-20dB, two at0dB, two
+muted, with the same peak1000 waveform). Mixer writes are read back and checked.
+These options do not enable services or change persistent defaults.

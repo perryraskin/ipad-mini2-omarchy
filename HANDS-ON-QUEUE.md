@@ -10,7 +10,11 @@ Stop on unexpected output and retain diagnostics before advancing.
 
 ## Remaining physical work, in order
 
-1. **Finish audio.** Inspect USB and the actual boot/session state on return before
+1. **Finish audio.** The public a8c6a0e driver passed isolated prepare-close,
+   drain/drop/restart,10s muted playback and another restart. Perry confirmed
+   the subsequent2s tone; kernel result0 and7starts/7stops. Next qualify volume/
+   mute, channel separation, volume keys and desktop/coexistence; no fresh boot
+   is required while the current owner remains healthy. Inspect USB and the actual boot/session state on return before
    deciding how to recover. Do not reload SIO firmware, unload retained modules,
    clear a poisoned-session flag or force a transport handoff. The isolated
    [audio startup procedure](audio/sio/native-transport/README.md) uses
