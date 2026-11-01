@@ -57,3 +57,10 @@ places panels below the native virtual keyboard. Without that environment,
 the passphrase panel reverted to OnDemand and typing remained in Terminal.
 The corrected live shell environment is verified; password-entry confirmation
 is pending. Do not collect field contents or terminal text during this test.
+
+The Wi-Fi passphrase prompt now has a48logical-pixel Show/Hide control.
+Passwords start masked and return to masked whenever the prompt closes.
+Toggling visibility restores focus to the field. The RAM-home patch helper
+checks the known upstream layout, applies idempotently, and leaves desktop
+startup available if that layout changes. No credential contents are read
+or captured to validate this control. Physical input confirmation is pending.

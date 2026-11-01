@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 """Configure only the RAM home for the exact J86 desktop."""
-import configparser,json,os,pathlib,shutil,sys,xml.etree.ElementTree as ET
+import configparser,json,os,pathlib,shutil,subprocess,sys,xml.etree.ElementTree as ET
 assert pathlib.Path('/proc/device-tree/model').read_bytes().rstrip(b'\0')==b'Apple iPad mini 2 (Cellular)'
 assert os.geteuid()==0
 home=pathlib.Path('/home/tablet');source=pathlib.Path(__file__).resolve().parent
+subprocess.run(['/usr/bin/python',str(source/'configure-passphrase.py')],check=False)
 host=sys.argv[1]
 import ipaddress
 assert ipaddress.ip_address(host).is_link_local
