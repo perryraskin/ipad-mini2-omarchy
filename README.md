@@ -18,9 +18,10 @@ Verified in a running Hoolock 7.0.12/Pomme session:
   physical rotation and session-restart QA remain pending.
 - Internal Wi-Fi chip enumerates at high speed as 0a5c:bd1c; read-only boot-ROM
   query identifies chip 0x4324/revision6. Stock and vendor-matched NVRAM RAM
-  firmware boot/command tests pass. Association is not working yet.
+  firmware boot/command tests pass. Later isolated audio2 tests also confirmed
+  association, DHCP, DNS and direct HTTPS (see HANDS-ON-QUEUE.md).
 
-Audio, native Wi-Fi networking, automatic rotation, GPU acceleration, charging,
+Audio desktop integration, automatic rotation, GPU acceleration, charging,
 battery reporting and true system suspend remain unfinished. Power handling is
 screen-off/wake and a hold menu; it does not suspend the SoC. HDMI is unverified.
 
@@ -43,7 +44,8 @@ app-root service and tests. `serve-apps-disk.py` uses a standard nbdkit backend.
 `wifi/build/patches/` includes an experimental brcmfmac chip/USB-ID mapping.
 `audio/` contains bounded inventory, exact-stock offline models, private SIO
 firmware preparation and an experimental core adaptation that is disabled by
-default. There is no qualified playback driver. `sensors/` contains offline
+default. Native speaker output through ALSA is owner-confirmed; interrupted-stream
+cleanup and desktop integration remain unfinished. See [audio checkpoint](audio/pcm-native/README.md). `sensors/` contains offline
 Oscar command framing and disabled rotation policy/IIO-reader drafts; no motion-sensor transport is active. `power/` contains a build-only suspend profile and read-only readiness report.
 
 Read [BUILDING.md](BUILDING.md) and [HARDWARE.md](HARDWARE.md) before using these

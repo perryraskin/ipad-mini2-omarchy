@@ -131,8 +131,11 @@ The generic core's A7 activation block remains in place.
 The isolated live session subsequently powered both CS35L19 B0 amps muted
 (status00/00), completed4096bytes with amps powered, and completed one bounded
 192000-byte low-amplitude500Hz transfer with unmute followed by mute/shutdown.
-All completion/stop ACKs and clock restoration checks passed. Audible
-confirmation remains pending. This does not qualify persistent playback or ALSA.
+All completion/stop ACKs and clock restoration checks passed for the bounded test.
+A subsequent ALSA two-second tone was clearly heard by the owner; see the
+[native PCM checkpoint](../pcm-native/README.md). Normal drain passed through ten
+seconds of muted playback. An interrupted stream exposed a stop-protocol error,
+and its session now refuses playback. Persistent playback remains unqualified.
 The I2C2 overlay is retained for this RAM session; do not reapply it. Temporary
 modules and owner-calibrated binaries are private, with the current exclusive
 transport handoff recorded only in the local session notes.

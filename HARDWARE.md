@@ -206,3 +206,15 @@ blocked pending shared-resource ownership, even with its explicit opt-in. The
 stock stop model preserves the remap. The observed PMGR change is consistent
 with auto clock gating; the previous stuck-power diagnosis was too strong. No
 speaker, ALSA playback or volume-mode qualification is claimed.
+
+## Native ALSA speaker output confirmed
+
+The owner clearly heard the two-second low-amplitude500Hz ALSA test on J86.
+One-second and ten-second muted normal-drain tests also passed; prepare-close
+passed. The following interrupted-stream/drop test exposed -EPROTO during stop;
+the amps were reset and the session poisoned, so further playback is blocked.
+The source-only runtime-calibration driver builds with Werror and has host tests,
+but its stop fix is not live-qualified. This supersedes earlier statements that
+no audible or ALSA playback had been confirmed. Desktop/app audio, physical volume
+keys, channel separation and sustained playback remain unqualified. See
+[audio/pcm-native/README.md](audio/pcm-native/README.md). No internal storage touched.

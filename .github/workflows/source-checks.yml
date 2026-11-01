@@ -37,3 +37,7 @@ jobs:
       - run: python audio/sio/tests/power-state.py
       - run: cc -std=c11 -Wall -Wextra -Werror audio/tests/load-once.c -o /tmp/j86-load-once-test && /tmp/j86-load-once-test
       - run: python audio/codec/tests/plan.py
+      - run: python audio/pcm-native/tests/plans.py
+      - run: cc -std=c11 -Wall -Wextra -Werror audio/pcm-native/tests/protocol.c -o /tmp/j86-pcm-protocol && /tmp/j86-pcm-protocol
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - run: cc -Wall -Wextra -Werror audio/pcm-native/test-playback.c -lasound -lm -o /tmp/j86-playback-test

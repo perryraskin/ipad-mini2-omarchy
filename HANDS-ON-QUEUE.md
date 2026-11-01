@@ -133,7 +133,7 @@ Two-second passive UART observation saw no bytes and restored power. Neither
 result is playback, sensor-stream or automatic-rotation qualification.
 Perry requested pausing touchscreen work; remaining rotation tests stay queued.
 
-## Current audio connection prerequisite
+## Historical audio connection notes (superseded by current ordered audio steps)
 
 Perry completed DFU recovery and sees Pongo's chess logo. The Mac still does not
 see its USB device after Lightning and USB-A reconnections. Next physical step:
@@ -149,7 +149,7 @@ isolated audio2 with SIO off, inventory those resources, then continue audio.
 Speakers and volume remain unqualified; see audio/sio/HANDOFF.md. No internal
 storage restore or erase is needed. Touchscreen work remains paused.
 
-## Latest isolated audio checkpoint
+## Historical isolated audio checkpoint
 
 Host USB port change restored enumeration and the audio2 RAM shell. No further
 physical step is needed for the current offline codec work. Both CS35L19 amps
@@ -166,3 +166,25 @@ restoration pass; amps remain reset. No physical step is requested yet. The
 session retains all shared controller leases and DMA buffers until RAM reboot;
 restore normal desktop use only through a clean RAM session after audio testing.
 The next physical audio step remains a quiet listening check after codec setup.
+
+## Current ordered audio steps (supersedes earlier listening requests)
+
+1. **Completed:** owner clearly heard the two-second500Hz ALSA speaker tone.
+   Normal drain passed at1s muted,2s audible and10s muted; prepare-close passed.
+2. **Fresh isolated RAM boot required:** early drop exposed a stop-protocol error.
+   The current session has reset amps and refuses playback; do not unload firmware,
+   clear poison, or retry the exploit while Linux remains connected. Coordinate
+   recovery/DFU only when the prepared payload and owner are ready.
+3. Qualify corrected stop handling: prepare-close, normal drain, midstream drop,
+   next-open/play, result/status counters and verified reset/clock restoration.
+   No fresh audible confirmation is needed for the old successful tone.
+4. Then low-volume left/right checks, volume/mute, physical volume-key handoff,
+   longer playback and actual app audio; restore desktop/touch/Wi-Fi coexistence
+   only after exclusive shared-controller ownership is resolved.
+5. Resume remaining main queue: motion/rotation and suspend/power tests, then
+   HDMI display qualification. **Bluetooth mouse/trackpad/keyboard follows HDMI**;
+   prefer native Bluetooth and document adapters if needed.
+
+Source candidate builds and host codec/protocol tests are not live qualification.
+No internal-storage changes, restore or erase are needed. Touchscreen feature work
+remains paused as requested.
