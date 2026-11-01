@@ -1,6 +1,6 @@
 {
   "BUILDING.md": "fa6f2160aece61e0115834960edab8e32d702238ad732ea5c0c0ba8aa9a0e2d7",
-  "HANDS-ON-QUEUE.md": "140db52b75024c88fc5680b9c97db062b731cac1705c4c13c5050ad7f1366bf0",
+  "HANDS-ON-QUEUE.md": "be6f8853ed715d44e42bf8c028aee5f9185d0e0f0206fc8fe526791d30a2d50e",
   "HARDWARE.md": "e3c559ff5611aa4e7e08668872b9868d522aa1d28566a3ea27729902a6562e46",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
   "README.md": "41271398de005c667f6d3f0eccfbf169602dd1a217fc025269451684c4cbfe6f",
@@ -104,7 +104,7 @@
   "updates/build-release.py": "9ca6ceee3ba7e3dceb005b19485c290fa76281dfafa57e30b3ca4d26b9ddb270",
   "updates/j86-update.py": "494c81f44b3a818067fbf1acae712f6672e85bc1a67a8593cecf4f4c30c53f91",
   "updates/tests/update.py": "867295f9215f59cfe171d4c7fe8d0d246a9d59eb86f35bd11c155039990e506c",
-  "wifi/README.md": "d6fa91d03c15f1e4a945c9ecfd2ed59c3cca2587c8f925e2f57748e814c9dcd6",
+  "wifi/README.md": "d1f9495a0348a7b12ea7588bb08813715eb521e0adfc884f8809177624180b26",
   "wifi/build-probes.sh": "67310ef0535291a21ae57370f51a075032d1171669a0946fde8d0c294f824ed9",
   "wifi/build/make-ramboot.py": "11d629bbcd518f4b061fd40e3c5caa038fafcd142a60d06c06cb4bf945448960",
   "wifi/build/package-kernel.sh": "0df9647d84826ad7e882248874862afae6a0cc730b1b3f32f21cb9b384f2d007",

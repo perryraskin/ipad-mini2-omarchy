@@ -104,3 +104,15 @@ Native brcmfmac accepted the exact staged firmware and scanned27network rows.
 NetworkManager uses only RAM profiles/state and leaves usb0 unmanaged. Perry
 is testing association through the network menu; DHCP/DNS/native HTTPS and
 host-disable power restoration remain pending. App installs remain disabled.
+
+Touch stopped during native Wi-Fi bring-up. Disabling Wi-Fi restored the
+EHCI power register but did not restore touch. A deliberate touch restart
+with Wi-Fi off restored physical taps (Perry confirmed). Cause is not yet
+established; a staged controller/radio/scan test is underway. Native scanning
+is a checkpoint, not a stable combined Wi-Fi/touch qualification.
+
+Follow-up isolation captured a complete32second finger gesture and release
+with native Wi-Fi enabled after touch reinitialization. A rescan then
+returned successfully. This does not establish the prior stall cause. Wi-Fi
+association remains pending through the iPad menu; do not load the inactive
+slower-clock diagnostic unless another failure justifies that comparison.

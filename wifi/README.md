@@ -52,3 +52,11 @@ may be limited. Do not replace board data or guess regulatory limits.
 The controller stops the native host after its userspace processes exit and
 unmounts NetworkManager tmpfs mounts before detaching the base root. Physical
 clean-disable/re-enable and connectivity checks remain in HANDS-ON-QUEUE.md.
+
+Combined-session follow-up: touch stopped and disabling Wi-Fi alone did not
+restore it. A deliberate touch restart with Wi-Fi off restored taps. A later
+staged host/radio test captured an entire32second finger gesture and release
+while native Wi-Fi was enabled. Rejected touch packets were also counted;
+the intermittent stall cause is not established. A slower-clock diagnostic
+module built locally but was not loaded. Stable coexistence is not yet claimed.
+EHCI disable restored its power register exactly in the live test.
