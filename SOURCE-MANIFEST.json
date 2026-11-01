@@ -1,6 +1,6 @@
 {
   "BUILDING.md": "fa6f2160aece61e0115834960edab8e32d702238ad732ea5c0c0ba8aa9a0e2d7",
-  "HANDS-ON-QUEUE.md": "1dbae2639b21f0b5a584cda61aa5a7e92b8b96e67e64c69e1bf9701329b4b75f",
+  "HANDS-ON-QUEUE.md": "71dfe5cbd01c7701f146d210dcb459af4a5d9644ee9df9899f9b080e3dfc20d5",
   "HARDWARE.md": "eba8fdf8a50ce911716fa9584a615b7aa03c780e61a142420f27a5dc0628b129",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
   "README.md": "41271398de005c667f6d3f0eccfbf169602dd1a217fc025269451684c4cbfe6f",
@@ -95,6 +95,10 @@
   "sensors/tests/oscar-receive.py": "9552e2ebb81ce8d4af6f05547c2ed8bb6c0ff93d88d6cf641b4912828044049c",
   "sensors/tests/oscar-rx.c": "439aad2e94be0cf5741d0d5adf91fee254bad9832e1711df8c15ed709f6634e9",
   "sensors/tests/rotation-policy.py": "799cb352c224bbabc35a4cfa62874e21c5ef4e679f4e5883b9c34cd647c20761",
+  "sensors/uart-inventory/Makefile": "880015bbeba0ab43e0bd5ad9be4397884b9482fecd9dfeeb58d2c51b0d518865",
+  "sensors/uart-inventory/README.md": "bf0f99b864d4fc5e4f3e26b23d8d635cbe3098e7a189f5c2f6f4baa2e06c91ce",
+  "sensors/uart-inventory/build.sh": "678b012a23dca3b319dbcf0583000856eb56329faf0a06fccf986e1c05b58492",
+  "sensors/uart-inventory/j86_oscar_uart_inventory.c": "9db87e66e4f79d1aebed4fee75b820b79d137bd8d76242c8e3a7fbc3582ae420",
   "serve-apps-disk.py": "0898d5efae9e7361ef1aa65e5ee88408444493af0c7328ae01a2b4e8f1d1d3c0",
   "serve-root-readonly.py": "a31edb74a4fd44270845dd37e9feaf3573e83f4cb985f09fe83905505ccec860",
   "serve-web-proxy.py": "1001f555020f0fffad3301070e5c0ce59a1ed36c3d233c56b59d3c15c46baff7",

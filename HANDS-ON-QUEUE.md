@@ -7,7 +7,7 @@ storage. New Wi-Fi/audio/motion/suspend code is inactive by default. Candidate
 builds are experiments, not a daily-use release. Stop a stage on unexpected
 output and retain its logs before advancing.
 
-Completed October31: known-good RAM desktop recovered; scale2 taps physically confirmed reliable with stock Labwc. New bottom window bar physically confirmed to restore minimized apps. Long-press compositor tap-frame fix passes handler tests; Perry confirmed reliable quick taps and title-bar hold menu together. Perry also confirmed short Power screen-off, wake, and held Power menu. True SoC suspend remains unqualified. Manual landscape applied; physical touch/resize check is pending after app-launch freezes. Restored portrait after inaccessible viewer controls; increased title buttons to48logical pixels and opened a smaller Terminal for drag/resize qualification. Signed swayimg installation and actual rendering succeeded, but install-load latency and browser responsiveness are not qualified; installer is hidden again.
+Earlier October31 checks (current results below supersede pending status): known-good RAM desktop recovered; scale2 taps physically confirmed reliable with stock Labwc. New bottom window bar physically confirmed to restore minimized apps. Long-press compositor tap-frame fix passes handler tests; Perry confirmed reliable quick taps and title-bar hold menu together. Perry also confirmed short Power screen-off, wake, and held Power menu. True SoC suspend remains unqualified. Manual landscape applied; physical touch/resize check is pending after app-launch freezes. Restored portrait after inaccessible viewer controls; increased title buttons to48logical pixels and opened a smaller Terminal for drag/resize qualification. Signed swayimg installation and actual rendering succeeded, but install-load latency and browser responsiveness are not qualified; installer is hidden again.
 
 1. **Reconnect and recover the known-good session.** Reconnect the qualified
    USB-A-to-Lightning cable through the Mac adapter. Inspect USB, network/serial,
@@ -87,85 +87,28 @@ Completed October31: known-good RAM desktop recovered; scale2 taps physically co
     for the Mac-backed RAM session; queue those physical swaps rather than
     unplugging its active root connection without preparation.
 
-Record dated results and exact profile/commit next to each step when run. Do not
-mark a stage passed based solely on host models, synthetic events or compilation.
 
+## Current results and remaining physical checks (October 31)
 
-After a source update, explicitly restart/deploy the reviewed services only during
-this live session. Confirm the new package gate and volume mode after deployment;
-source apply alone does not reload the iPad or switch its RAM boot. The updater
-must never be used as an iPad filesystem/package updater.
+- Steps 1–2: audio2 RAM desktop, aligned taps, dragging, long-press context menu,
+  minimized-window restore, brightness and screen-off/wake passed Perry's tests.
+  Screen-off is not SoC suspend. Multi-touch and repeated stress remain unqualified.
+- Step 3: finish the full four-orientation touch/resize cycle; restore portrait.
+- Step 4: bounded 16MiB write/fsync/readback, clean detach, offline filesystem
+  checks, remount persistence and signed Calculator reinstall passed. Perry
+  confirmed Calculator and dragging, then Firefox scrolling after restart with
+  smaller caches and reduced animation work. Installs were explicitly enabled
+  for this qualified session; ordinary startup still hides the installer.
+- Steps 5–6: audio2 boot, native Wi-Fi association/DHCP/DNS/direct HTTPS and
+  NetworkManager full connectivity passed. Perry confirmed combined touch use.
+  Long-duration stress and clean wireless-disable/recovery remain to qualify.
+- Step 7: bounded MCA1 inventory restored power. Route/NCO models and builds are
+  host results only; no speaker playback, SIO DMA or amp programming is qualified.
+- Step 8: bounded UART4 control inventory restored power (0x200 to 0x200).
+  Clock parent, baud, live M7 transport and acceleration reports remain unknown.
+- Step 9: suspend diagnostic RAM payload built, not booted. Never suspend NBD root.
+- Steps 10–11: HDMI remains pending; Bluetooth work starts only after HDMI.
 
-
-Recovery checkpoint, 2026-10-31: known-good RAM boot restored; live native touch
-reports state2, the Omarchy shell has a ready receipt, root NBD2 is read-only,
-and the app service is ready with installs hidden. Mac root serving holds an
-idle-sleep assertion while connected. Physical tap/button confirmation remains
-pending. Both loader USB handoffs may need separate cable reconnects; the Pongo
-logo can lag its upload, so do not infer iOS boot from the Apple logo alone.
-
-October31 touch recovery: physical drags produced no evdev contacts after a
-firmware restart associated with screen wake. Another deliberate restart
-restored continuous motion and Perry confirmed the drag worked. Screen blanking
-now gates exact-device Labwc sendEventsMode while retaining touch scanning.
-The configuration helper preserves touch calibration and other devices in
-tests. Perry physically confirmed dragging still works immediately after off/wake with this change; this is
-not platform suspend or reduced touch-controller power.
-
-Perry physically confirmed Terminal corner resizing after touch recovery.
-Title-bar dragging and resizing, long-press, minimized-window restoration,
-and touch after screen blank/wake now have separate physical confirmations.
-
-Experimental audio2 RAM boot is now physically confirmed with aligned touch.
-Native brcmfmac accepted the exact staged firmware and scanned27network rows.
-NetworkManager uses only RAM profiles/state and leaves usb0 unmanaged. Perry
-is testing association through the network menu; DHCP/DNS/native HTTPS and
-host-disable power restoration remain pending. App installs remain disabled.
-
-Touch stopped during native Wi-Fi bring-up. Disabling Wi-Fi restored the
-EHCI power register but did not restore touch. A deliberate touch restart
-with Wi-Fi off restored physical taps (Perry confirmed). Cause is not yet
-established; a staged controller/radio/scan test is underway. Native scanning
-is a checkpoint, not a stable combined Wi-Fi/touch qualification.
-
-Follow-up isolation captured a complete32second finger gesture and release
-with native Wi-Fi enabled after touch reinitialization. A rescan then
-returned successfully. This does not establish the prior stall cause. Wi-Fi
-association remains pending through the iPad menu; do not load the inactive
-slower-clock diagnostic unless another failure justifies that comparison.
-
-Audio2 bounded MCA1 inventory passed with exact power restoration and no
-audio/GPIO/PMIC writes. No playback claim. Quickshell was refreshed after
-NetworkManager startup and the Wi-Fi panel was opened for Perry to connect.
-
-Network passphrase focus regression: touch-mode environment was missing.
-It is now enabled for launch/restart and the current shell was refreshed.
-Perry must confirm typing reaches the masked password field rather than
-Terminal; do not capture credentials in diagnostics.
-
-Wi-Fi connection attempt was denied by session policy before password
-authentication. A scoped RAM-only policy now grants the required NM actions
-to tablet, verified live as yes. Perry is retrying Connect in the existing
-panel; association and native internet validation remain pending.
-
-October 31 follow-up: Perry reports touch working well after native Wi-Fi and
-DNS qualification. This is a combined-session observation, not a long-duration
-stress-test result. Native HTTPS returned 200 and NM connectivity full.
-
-October 31 current-session app follow-up: 4KiB requests, queue depth2, reduced
-dirty limits and an independent OpenSSH forward passed 16MiB fsync/readback,
-clean detach, all five offline e2fsck passes and matching hash after remount.
-Native-wlan0 HTTPS and signed Calculator reinstall returned success. Earlier
-larger-request failures remain preserved privately; installer is still hidden.
-Perry reports Calculator interactions and window dragging mostly work; Firefox
-scrolling lags. Measurements show low available RAM and almost-full compressed
-swap; this is not a claim of daily-use performance.
-
-Latest current-session storage status supersedes the earlier hidden-installer
-notes: after the signed package operation, clean detach and offline e2fsck passed
-again. A matching private source/kernel qualification receipt and fresh health
-check explicitly enabled installs. Default startup still hides installs. The
-live memory guard rejected a request before starting a transaction under Firefox
-pressure; the UI tells Perry to close apps and retry. New Firefox cache/frame
-settings are staged in RAM user.js and await a browser restart/physical scroll
-comparison. No sandbox or site-isolation setting was weakened.
+Follow the numbered order for remaining hands-on checks. Do not repeat completed
+DFU or firmware steps solely because an earlier paragraph described them as pending.
+Source updates do not reload the running iPad or change its RAM-boot profile.
