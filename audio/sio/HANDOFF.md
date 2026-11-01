@@ -125,3 +125,14 @@ basic muted DMA path, not audible playback, cyclic reliability, ALSA integration
 physical sample-rate accuracy, or coexistence with touch. Temporary live session
 and recovery modules are still private development code pending consolidation.
 The generic core's A7 activation block remains in place.
+
+### Combined amplifier/PCM checkpoint
+
+The isolated live session subsequently powered both CS35L19 B0 amps muted
+(status00/00), completed4096bytes with amps powered, and completed one bounded
+192000-byte low-amplitude500Hz transfer with unmute followed by mute/shutdown.
+All completion/stop ACKs and clock restoration checks passed. Audible
+confirmation remains pending. This does not qualify persistent playback or ALSA.
+The I2C2 overlay is retained for this RAM session; do not reapply it. Temporary
+modules and owner-calibrated binaries are private, with the current exclusive
+transport handoff recorded only in the local session notes.

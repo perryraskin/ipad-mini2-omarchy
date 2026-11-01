@@ -56,3 +56,12 @@ exactly0. This establishes register access/readback, not physical frequency or
 speaker playback. The existing SIO firmware/buffers remain resident and the
 successful muted-DMA handoff remains available. The next stage must own this
 clock region alongside the amp reset/keepalive and checked I2C lifecycle.
+
+Further live checks on the same isolated RAM boot passed: both B0 amplifiers
+powered up digitally muted and returned status00/00, then shut down with reset
+and clock restored. The combined muted amplifier/DMA test completed4096bytes.
+A subsequent bounded500Hz sine test transferred192000bytes in about one second
+(stereo16,48kHz,peak1000/32768,5ms ramps,codec0dB), received completion and stop
+ACKs, and restored reset/NCO/switch/clock. Audible confirmation is pending;
+this is not yet a qualified ALSA playback device or a speaker-audio success claim.
+The temporary bench binaries contain owner calibration and are not distributed.
