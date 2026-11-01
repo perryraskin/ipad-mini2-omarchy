@@ -47,3 +47,11 @@ All physical steps live in [HANDS-ON-QUEUE.md](../HANDS-ON-QUEUE.md).
 The separate ARM64 Image and all configured modules built successfully as `7.0.12-j86-suspend1`. [build-receipt.json](build-receipt.json) records artifact/config hashes and the unchanged DT wake audit. No RAM payload was generated and no device boot or suspend test occurred.
 
 The new Oscar attach draft rejects system suspend while attached because UART/M7 wake is unqualified. The MCA bench draft rejects system suspend while its clock/power lease is active. Neither adds stream resume support or a new suspend menu entry. These compile-time guards do not establish deep A7 resume.
+
+October31 touch recovery: physical drags produced no evdev contacts after a
+firmware restart associated with screen wake. Another deliberate restart
+restored continuous motion and Perry confirmed the drag worked. Screen blanking
+now gates exact-device Labwc sendEventsMode while retaining touch scanning.
+The configuration helper preserves touch calibration and other devices in
+tests. Physical off/wake/drag retest of this change remains pending; this is
+not platform suspend or reduced touch-controller power.

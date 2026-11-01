@@ -20,3 +20,13 @@ print('Session keys: default, explicit mode, sink failure and hold/release passe
 
 assert not m.native_audio_sink('media.class = \"Audio/Sink\"\nnode.name = \"auto_null\"')
 assert m.native_audio_sink('media.class = \"Audio/Sink\"\napi.alsa.path = \"hw:0,0\"')
+
+import xml.etree.ElementTree as ET
+before=b'<labwc_config><libinput><device category="J86 native touchscreen"><calibrationMatrix>1 0 0 0 1 0</calibrationMatrix></device><device category="mouse"><naturalScroll>yes</naturalScroll></device></libinput></labwc_config>'
+for enabled in (False,True,False,True):
+ before=m.touch_delivery_config(before,enabled);tree=ET.fromstring(before)
+ device=tree.find("libinput/device[@category='J86 native touchscreen']")
+ assert device.findtext('sendEventsMode')==('yes' if enabled else 'no')
+ assert device.findtext('calibrationMatrix')=='1 0 0 0 1 0'
+ assert tree.find("libinput/device[@category='mouse']").findtext('naturalScroll')=='yes'
+print('Screen blanking: compositor touch delivery toggles preserve calibration and other devices')

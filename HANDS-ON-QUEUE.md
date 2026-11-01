@@ -86,3 +86,11 @@ and the app service is ready with installs hidden. Mac root serving holds an
 idle-sleep assertion while connected. Physical tap/button confirmation remains
 pending. Both loader USB handoffs may need separate cable reconnects; the Pongo
 logo can lag its upload, so do not infer iOS boot from the Apple logo alone.
+
+October31 touch recovery: physical drags produced no evdev contacts after a
+firmware restart associated with screen wake. Another deliberate restart
+restored continuous motion and Perry confirmed the drag worked. Screen blanking
+now gates exact-device Labwc sendEventsMode while retaining touch scanning.
+The configuration helper preserves touch calibration and other devices in
+tests. Physical off/wake/drag retest of this change remains pending; this is
+not platform suspend or reduced touch-controller power.

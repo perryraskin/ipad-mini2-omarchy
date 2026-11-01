@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exact J86 session keys. Screen off is not SoC suspend."""
-import argparse,glob,os,pathlib,re,select,socket,struct,subprocess,time
+import argparse,glob,json,os,pathlib,re,select,signal,socket,struct,subprocess,time,xml.etree.ElementTree as ET
 
 class PowerButton:
  def __init__(self,short,long):
@@ -31,6 +31,18 @@ def native_audio_sink(inspect):
  return bool(re.search(r'media\.class\s*=\s*"Audio/Sink"',inspect) and
              re.search(r'api\.alsa\.path\s*=\s*"[^"\n]+"',inspect) and
              not re.search(r'node\.name\s*=\s*"auto_null"',inspect))
+
+def touch_delivery_config(data,enabled):
+ root=ET.fromstring(data)
+ libinput=root.find('libinput')
+ if libinput is None:libinput=ET.SubElement(root,'libinput')
+ matches=[d for d in libinput.findall('device') if d.get('category')=='J86 native touchscreen']
+ if len(matches)>1:raise RuntimeError('Ambiguous touchscreen configuration')
+ device=matches[0] if matches else ET.SubElement(libinput,'device',category='J86 native touchscreen')
+ mode=device.find('sendEventsMode')
+ if mode is None:mode=ET.SubElement(device,'sendEventsMode')
+ mode.text='yes' if enabled else 'no'
+ return ET.tostring(root,encoding='utf-8')
 
 def main():
  parser=argparse.ArgumentParser(description=__doc__)
@@ -64,19 +76,37 @@ def main():
   result=shell('/usr/bin/wpctl','set-volume','--limit','1.0',identity[1],'5%+' if direction>0 else '5%-',timeout=1)
   if result.returncode:raise RuntimeError('No usable PipeWire sink; volume unchanged')
  volume_keys=VolumeKeys(key_brightness,key_volume)
- saved=None;touch=pathlib.Path('/sys/module/j86_touch/parameters')
+ saved=None
+ def touch_delivery(enabled):
+  # Keep the qualified scanning firmware alive. Only gate compositor delivery;
+  # a firmware restart on every screen wake lost physical contacts in live tests.
+  runtime=pathlib.Path('/run/user/1000')
+  shell_pid=json.loads((runtime/'omarchy-desktop-ready.json').read_text())['shell_pid']
+  values=pathlib.Path('/proc/'+str(shell_pid)+'/environ').read_bytes().split(b'\0')
+  pids=[v.split(b'=',1)[1] for v in values if v.startswith(b'LABWC_PID=')]
+  if len(pids)!=1 or not pids[0].isdigit():raise RuntimeError('No verified compositor PID')
+  pid=int(pids[0]);exe=os.readlink('/proc/'+str(pid)+'/exe')
+  if exe not in ('/usr/bin/labwc','/run/j86-desktop/build/labwc-j86-long-press') or pathlib.Path('/proc/'+str(pid)).stat().st_uid!=1000:raise RuntimeError('Unexpected compositor')
+  config=pathlib.Path('/home/tablet/.config/labwc/rc.xml')
+  before=config.read_bytes();after=touch_delivery_config(before,enabled)
+  temporary=config.with_name('rc.xml.screen-next')
+  try:
+   temporary.write_bytes(after);os.chown(temporary,1000,1000);os.replace(temporary,config)
+   os.kill(pid,signal.SIGHUP)
+  finally:temporary.unlink(missing_ok=True)
  def screen_toggle():
   nonlocal saved
   if saved is None:
-   saved=max(1,int((backlight/'brightness').read_text()))
-   (touch/'enabled').write_text('N\n');deadline=time.monotonic()+8
-   while (touch/'state').read_text().strip()!='0':
-    if time.monotonic()>deadline:
-     saved=None;(touch/'enabled').write_text('Y\n');raise RuntimeError('Touch did not stop; screen left on')
-    time.sleep(.05)
-   brightness(0);print('Screen off; touch stopped. System remains awake.',flush=True)
+   value=max(1,int((backlight/'brightness').read_text()))
+   touch_delivery(False)
+   try:brightness(0)
+   except Exception:
+    touch_delivery(True);raise
+   saved=value
+   print('Screen off; touch delivery disabled; scanning retained. System remains awake.',flush=True)
   else:
-   brightness(saved);saved=None;(touch/'enabled').write_text('Y\n');print('Screen on; touch restart requested.',flush=True)
+   brightness(saved);touch_delivery(True);saved=None
+   print('Screen on; touch delivery enabled without firmware restart.',flush=True)
  def power_menu():
   if saved is not None:screen_toggle()
   menu('system')
@@ -114,6 +144,6 @@ def main():
      except (OSError,RuntimeError,subprocess.SubprocessError) as error:print('Key action failed:',error,flush=True)
   finally:
    control.unlink(missing_ok=True)
-   if saved is not None:brightness(saved);(touch/'enabled').write_text('Y\n')
+   if saved is not None:brightness(saved);touch_delivery(True)
 
 if __name__=='__main__':main()
