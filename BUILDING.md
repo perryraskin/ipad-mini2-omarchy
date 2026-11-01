@@ -217,3 +217,12 @@ an explicit physical RAM-boot operation for Perry's return; the default remains
 known-good. No install-to-internal-storage command is provided. Device boot,
 app storage on this new kernel, and hardware functionality remain unqualified.
 The public GitHub release contains source only; see updates/README.md.
+
+Audio follow-up builds: `bash audio/sio/build-core.sh audio2` or
+`bash audio/sio/build-transport.sh` builds the inactive core/DMA/virt-dma modules
+against complete audio2 exports. `bash audio/sio/inventory/build.sh` and
+`bash sensors/uart-observe/build.sh` compile standalone bounded diagnostics.
+None stages or loads a module. `audio/sio/prepare-upstream.py` applies both
+experimental patches to checksum-pinned public source; verify that generated
+source before building. The clock model needs an owner live boot ADT as well
+as the exact cache; neither input belongs in the public repository.

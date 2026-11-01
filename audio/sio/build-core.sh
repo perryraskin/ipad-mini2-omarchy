@@ -3,11 +3,12 @@
 set -euo pipefail
 TASK_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 profile=${1:-candidate}
-case "$profile" in known-good|candidate) ;; *) exit 2;; esac
+case "$profile" in known-good|candidate|audio2) ;; *) exit 2;; esac
 limactl shell j86-build env "J86_TASK_ROOT=$TASK_ROOT" "J86_PROFILE=$profile" bash -c '
 set -euo pipefail
 kernel="$HOME/j86-wifi-kernel"; release=7.0.12-j86-wifi1
 if [ "$J86_PROFILE" = known-good ]; then kernel="$HOME/j86-kernel"; release=7.0.12-gdfa4d4208131-dirty; fi
+if [ "$J86_PROFILE" = audio2 ]; then kernel="$HOME/j86-audio-kernel"; release=7.0.12-j86-audio2; fi
 test "$(make -s -C "$kernel" ARCH=arm64 kernelrelease)" = "$release"
 test -s "$kernel/Module.symvers" || { echo "Full matching kernel export table required; refusing an unchecked module" >&2; exit 1; }
 source="$J86_TASK_ROOT/audio/sio/source"

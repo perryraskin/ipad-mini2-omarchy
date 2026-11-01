@@ -187,3 +187,15 @@ the fixed-format NCO plan matches six synthetic parent rates. These remain
 offline models with fake OS/clock callbacks, not real-rate or playback results.
 The inactive suspend1 RAM diagnostic payload is built with matching USB modules;
 no boot, physical wake or SoC suspend has been qualified.
+
+## Declared clocks and transport follow-up
+
+The owner live boot ADT and executed stock index/ID lookup establish declared
+NCO references342857142/1200000000/24000000/100000000Hz and UART4 primary24MHz;
+see audio/clock-evidence.md. Actual mux/gate ownership remains unqualified.
+The SIO core, cyclic DMA and exact virt-dma dependency build strictly for audio2.
+A live passive inventory found SIO domain on, remap-enable1 and CPU-control0,
+with the entire power word unchanged. The draft now refuses inherited remaps
+before firmware allocation or programming. No SIO firmware boot/DMA/audio test.
+A two-second inherited-settings UART4 receive observation saw zero bytes and
+restored domain0x200. No command/reset/baud writes or acceleration claims.

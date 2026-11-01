@@ -124,3 +124,11 @@ Perry confirmed corner dragging resizes Terminal with the edge-press fix.
 Landscape aligned taps, titlebar dragging, Smaller window menu and corner resizing
 are now physically confirmed for this build. Full four-orientation cycle remains
 pending; do not infer automatic rotation or suspend qualification.
+
+Audio/motion follow-up: stock clock lookup now verifies boot-declared NCO
+primary342857142Hz and UART4 primary24MHz. Live passive SIO inventory found
+remap-enable1 with CPU-control0; power unchanged. Firmware boot remains blocked
+by unowned inherited mapping; a DFU reboot alone does not authorize takeover.
+Two-second passive UART observation saw no bytes and restored power. Neither
+result is playback, sensor-stream or automatic-rotation qualification.
+Perry requested pausing touchscreen work; remaining rotation tests stay queued.

@@ -27,3 +27,8 @@ cc -std=c11 -Wall -Wextra -Werror audio/nco/tests/plan.c -o /tmp/j86-nco-plan
 python audio/derive-mca.py /path/to/exact/kernelcache --nco-model \
   --nco-parent-rate 342857142 --nco-backend /tmp/j86-nco-plan
 ```
+
+Follow-up: the owner's live boot ADT and executed stock provider lookup now
+recover342857142Hz as NCO's declared primary reference (clock0x10b). See
+[clock-evidence.md](../clock-evidence.md). This narrows the parent evidence; it
+does not measure the live clock or qualify gate/channel takeover and restore.

@@ -17,5 +17,11 @@
   ],
   "live_controller_inventory": "passed; balanced power restored; no audio/GPIO/PMIC writes",
   "playback_qualified": false,
-  "mca_sidecar_followup": "exact measured ID/FIFO guard and stock reset-then-flush polling order; strict build passed; not loaded"
+  "mca_sidecar_followup": "exact measured ID/FIFO guard and stock reset-then-flush polling order; strict build passed; not loaded",
+  "sio_core_audio2_strict_build": "passed; default off; not loaded",
+  "sio_dma_audio2_strict_build": "passed with exact virt-dma dependency; not loaded",
+  "stock_clock_lookup": "passed against owner live ADT: NCO primary342857142Hz; UART4 primary24MHz; declared not measured",
+  "live_sio_passive_inventory": "passed: existing power unchanged, remap-enable1, CPU-control0; no writes",
+  "sio_inherited_remap_guard": "strict build passed; firmware boot still unqualified",
+  "live_uart4_passive_rx": "two seconds, zero bytes, power restored; no TX/baud/reset writes"
 }

@@ -1,0 +1,24 @@
+From: Perry Raskin <perryraskin@gmail.com>
+Subject: [PATCH] soc: apple: sio: refuse unowned inherited J86 remap
+
+The running J86 retained remap-enable=1 with CPU control=0. A stopped
+CPU is insufficient ownership evidence. Refuse before firmware allocation
+or writes; no mapping takeover/restore policy has been qualified.
+
+--- a/drivers/soc/apple/apple-sio-core.c
++++ b/drivers/soc/apple/apple-sio-core.c
+@@ -873,6 +873,14 @@
+ 			return dev_err_probe(sio->dev, ret ?: -EBUSY,
+ 					     "SmartIO CPU is already running\n");
+ 	}
++
++	/* A stopped CPU does not make an inherited firmware mapping ours.
++	 * Live J86 retains remap-enable=1 even with CPU_RUN clear. Until a
++	 * reviewed remap lease/restore protocol exists, do not overwrite it. */
++	if (sio->legacy_a7 &&
++	    readl(sio->base + apple_sio_reg(sio, APPLE_SIO_REMAP_ENABLE)))
++		return dev_err_probe(sio->dev, -EBUSY,
++				     "J86 inherited SIO remap is not owned by this driver\n");
+ 
+ 	/* No user-helper fallback: a missing image must not stall the boot. */
+ 	ret = request_firmware_direct(&firmware, firmware_name, sio->dev);
