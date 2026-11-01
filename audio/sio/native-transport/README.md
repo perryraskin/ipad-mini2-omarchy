@@ -20,7 +20,8 @@ The running poisoned session must not be reused, and its handoff must not be for
 1. Build `bash audio/sio/session/build.sh`, then
    `bash audio/sio/native-transport/build.sh`, then
    `bash audio/pcm-native/build.sh`. Use the matching prepared audio2 kernel.
-2. Recover a fresh isolated RAM boot; verify exact kernel, J86 identity and new boot
+2. Recover a fresh isolated RAM boot with
+   `./ipad-linux --profile audio-candidate --isolated start`; verify exact kernel, J86 identity and new boot
    ID. Keep desktop, touch, Wi-Fi and NBD stopped. Inventory shared SPI/UART/MCA
    ownership before releasing any existing driver; do not blindly unbind consoles.
 3. Stage exact owner firmware and speaker records only in RAM. The session checks

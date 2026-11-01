@@ -142,6 +142,10 @@ def start():
  c=discover_network()
  serial('ip addr add '+c['device_ip']+'/16 dev usb0 2>/dev/null || true')
  print(network('echo USB_NETWORK_PREFLIGHT_OK'),end='',flush=True)
+ if a.isolated:
+  print("Isolated RAM shell ready; no desktop, touch, Wi-Fi, storage or proxy services started.")
+  print("Existing device state was not reset; verify a fresh boot ID before audio initialization.")
+  return
  ensure_web_proxy(c)
  ready=network('test -f /mnt/omarchy/run/user/1000/omarchy-desktop-ready.json && cat /mnt/omarchy/run/user/1000/omarchy-desktop-ready.json')
  if 'shell_pid' in ready:
@@ -220,6 +224,7 @@ def stop(reboot=True):
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--profile',choices=['known-good','candidate','audio-candidate'],default='known-good',help='Candidate is unbooted; requires a deliberate physical DFU test')
+parser.add_argument('--isolated',action='store_true',help='Stop start after USB shell setup; do not launch desktop or host services')
 parser.add_argument('action',choices=['start','status','shell','view','ios','detach','dfu'])
 parser.add_argument('command',nargs='*')
 a=parser.parse_args()

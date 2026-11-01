@@ -28,3 +28,19 @@ with tempfile.TemporaryDirectory() as tmp:
  except RuntimeError:pass
  else:raise AssertionError('Corrupt sidecar accepted')
 print('Boot selector: inactive audio2 identity, full hash coverage, safe paths and corruption refusal passed')
+
+# Execute the actual start() path with an already enumerated Linux gadget.
+start=next(n for n in ast.parse(source.read_text()).body if isinstance(n,ast.FunctionDef) and n.name=='start')
+calls=[]
+def forbidden(*args):raise AssertionError('Isolated start reached desktop/proxy path')
+scope={'a':types.SimpleNamespace(isolated=True),'verify_assets':lambda:None,
+ 'boot_profile':lambda:{'kernel_release':'7.0.12-j86-audio2'},
+ 'glob':types.SimpleNamespace(glob=lambda _:['gadget']),
+ 'serial':lambda cmd:'Apple iPad mini 2 (Cellular) 7.0.12-j86-audio2',
+ 'discover_network':lambda:{'device_ip':'169.254.1.2'},
+ 'network':lambda cmd:calls.append(cmd) or 'USB_NETWORK_PREFLIGHT_OK',
+ 'ensure_web_proxy':forbidden,'start_touch':forbidden}
+exec(compile(ast.Module(body=[start],type_ignores=[]),str(source),'exec'),scope)
+scope['start']()
+assert calls==['echo USB_NETWORK_PREFLIGHT_OK']
+print('Isolated boot stops before desktop, touch, proxy and storage setup')
