@@ -1,9 +1,8 @@
 # Ordered physical validation checklist
 
-**Paused at Perry's request.** Perry is taking a break and powering off the Mac.
-Do not start another physical step, request DFU/reconnection, start a RAM boot,
-or keep the RAM session alive. Resume only when Perry returns and says ready.
-The order below applies after resuming; historical notes do not override it.
+**Audio resumed at Perry's explicit request.** The after-audio order remains HDMI,
+then Bluetooth/wired peripherals, then touch rotation, auto-rotation and suspend.
+Do not treat the later experiments as the next physical work.
 
 Never restore, repartition, flash, erase or install to iPad internal storage.
 Candidate code remains opt-in. Builds and host tests are not hardware qualification.

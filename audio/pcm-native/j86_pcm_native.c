@@ -45,6 +45,10 @@ static struct snd_card *card;
 static struct snd_pcm_substream *stream;
 static struct snd_dma_buffer pcm_buf;
 static struct work_struct playback_work;
+static struct workqueue_struct *playback_queue;
+static bool dma_submitted;
+static unsigned int phase;
+module_param(phase,uint,0400);
 static bool running,poisoned,opened,prepared,handed_off;
 static unsigned int hw_pos;
 static int volume=30,speaker_on; /* -30dB default; switch off */
@@ -162,16 +166,9 @@ static int submit(unsigned int slot,unsigned int period)
 }
 static void run_playback(struct work_struct *work)
 {
- unsigned int index[2]={0,1},next=2,expected=0;int rc,stoprc;bool submitted=false;
- unsigned long deadline;u32 *rec=transport.desc0;struct snd_pcm_substream *s=READ_ONCE(stream);
- ++starts;rc=0;if(!prepared){rc=-EIO;goto cleanup;}
- memset(rec,0,24*12);rec[0]=0x21;rec[2]=0xcc;rec[3]=0xac;rec[4]=192;rec[6]=4;
- rc=send_cmd(5,1,0);if(rc)goto cleanup;rc=ack(1,5);if(rc)goto cleanup;
- rc=submit(0,0);if(rc)goto cleanup;submitted=true;rc=ack(2,6);if(rc)goto cleanup;
- rc=submit(1,1);if(rc)goto cleanup;rc=ack(3,6);if(rc)goto cleanup;
- if(!READ_ONCE(running))goto cleanup;
- rc=apply_mixer();if(rc)goto cleanup;
- writel(mp.start[0].value,transport.owner.mca1+0x18);writel(mp.start[1].value,transport.owner.mca1+0x0c);
+ unsigned int index[2]={0,1},next=2,expected=0;int rc=0,stoprc;
+ unsigned long deadline;struct snd_pcm_substream *s=READ_ONCE(stream);
+ WRITE_ONCE(phase,3);
  deadline=jiffies+msecs_to_jiffies(500);
  while(READ_ONCE(running)){
   u64 msg;u8 op,tag,param;unsigned int slot;
@@ -197,12 +194,13 @@ static void run_playback(struct work_struct *work)
   deadline=jiffies+msecs_to_jiffies(500);
  }
  if(!READ_ONCE(running)&&rc==-EAGAIN)rc=0;
-cleanup:
  /* Stop DMA before releasing any backing storage (which is retained anyway). */
  if(amp_attempted){int a;for(a=0;a<2;++a)if(bus)wr(a,0x10,0x19,255);}
- if(submitted){stoprc=send_cmd(8,15,0);if(!stoprc)stoprc=ack(15,8);if(stoprc){poisoned=true;if(!rc)rc=stoprc;}}
+ WRITE_ONCE(phase,4);
+ if(dma_submitted){stoprc=send_cmd(8,15,0);if(!stoprc)stoprc=ack(15,8);if(stoprc){poisoned=true;if(!rc)rc=stoprc;}}
  stoprc=prepared?restore_hw():0;prepared=false;if(stoprc){poisoned=true;if(!rc)rc=stoprc;}
- ++stops;WRITE_ONCE(result,rc);
+ dma_submitted=false;
+ ++stops;WRITE_ONCE(result,rc);WRITE_ONCE(phase,5);
  if(rc){pr_err(TAG "stream failed %d poisoned=%d; amps reset\n",rc,poisoned);if(READ_ONCE(running))snd_pcm_stop_xrun(s);}
  WRITE_ONCE(running,false);
 }
@@ -240,15 +238,37 @@ static int pcm_prepare(struct snd_pcm_substream *s)
  rc=setup_hw();if(rc){if(restore_hw())poisoned=true;result=rc;return rc;}
  prepared=true;WRITE_ONCE(hw_pos,0);WRITE_ONCE(result,0);return 0;
 }
+/* PCM is nonatomic: START may wait for bounded mailbox ACKs. Complete the
+ * startup before returning, so ALSA does not count scheduler/mailbox delay as
+ * already-played audio. The worker only services an already-started stream. */
 static int pcm_trigger(struct snd_pcm_substream *s,int cmd)
 {
+ int rc,stoprc;u32 *rec=transport.desc0;
  switch(cmd){
  case SNDRV_PCM_TRIGGER_START:
-  if(poisoned||handed_off)return -EIO;
-  WRITE_ONCE(running,true);if(!schedule_work(&playback_work)){WRITE_ONCE(running,false);return -EBUSY;}return 0;
+  if(poisoned||handed_off||!prepared)return -EIO;
+  WRITE_ONCE(phase,1);++starts;dma_submitted=false;
+  memset(rec,0,24*12);rec[0]=0x21;rec[2]=0xcc;rec[3]=0xac;rec[4]=192;rec[6]=4;
+  rc=send_cmd(5,1,0);if(rc)goto fail;rc=ack(1,5);if(rc)goto fail;
+  dma_submitted=true; /* even a failed submit may have reached the firmware */
+  rc=submit(0,0);if(rc)goto fail;rc=ack(2,6);if(rc)goto fail;
+  rc=submit(1,1);if(rc)goto fail;rc=ack(3,6);if(rc)goto fail;
+  rc=apply_mixer();if(rc)goto fail;
+  WRITE_ONCE(running,true);WRITE_ONCE(phase,2);
+  writel(mp.start[0].value,transport.owner.mca1+0x18);
+  writel(mp.start[1].value,transport.owner.mca1+0x0c);
+  if(!queue_work(playback_queue,&playback_work)){rc=-EBUSY;goto fail;}
+  return 0;
  case SNDRV_PCM_TRIGGER_STOP:WRITE_ONCE(running,false);return 0;
  default:return -EINVAL;
  }
+fail:
+ WRITE_ONCE(running,false);WRITE_ONCE(phase,4);
+ if(dma_submitted){stoprc=send_cmd(8,15,0);if(!stoprc)stoprc=ack(15,8);if(stoprc)poisoned=true;}
+ stoprc=restore_hw();prepared=false;if(stoprc)poisoned=true;
+ dma_submitted=false;++stops;WRITE_ONCE(result,rc);WRITE_ONCE(phase,5);
+ pr_err(TAG "synchronous start failed %d poisoned=%d\n",rc,poisoned);
+ return rc;
 }
 static int pcm_sync_stop(struct snd_pcm_substream *s)
 {cancel_work_sync(&playback_work);return 0;}
@@ -323,6 +343,8 @@ static int __init pcm_init(void)
  rc=take_live_transport();if(rc)return rc;
  /* After handoff retain ownership/module, including failure paths. */
  INIT_WORK(&playback_work,run_playback);
+ playback_queue=alloc_workqueue("j86-pcm",WQ_HIGHPRI|WQ_UNBOUND|WQ_MEM_RECLAIM,1);
+ if(!playback_queue){rc=-ENOMEM;goto out;}
  rc=snd_card_new(transport.owner.dma_device,-1,"J86Native",THIS_MODULE,0,&card);if(rc)goto out;
  rc=snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,transport.owner.dma_device,BUFFER,&pcm_buf);if(rc)goto out;
  if(!IS_ALIGNED(pcm_buf.addr,4096)||pcm_buf.addr+BUFFER>BIT_ULL(36)){rc=-ERANGE;goto out;}

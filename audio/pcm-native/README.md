@@ -52,3 +52,20 @@ Tone uses peak1000/32768,500Hz,5ms ramps. The helper now reads kernel result aft
 status is unavailable. Also inspect matching start/stop counts; this does not
 replace physical or long-duration qualification.
 Physical volume-button handoff and app audio remain in HANDS-ON-QUEUE.md.
+
+## Startup timing follow-up
+
+The consolidated fresh startup passed on hardware (READY,eight ACKs,I2C2,ALSA
+registration and prepare-close). The first muted stream failed at4096frames while
+the driver reported a clean stop; the next attempt stalled, and command shells
+became unavailable although ICMP still replied. The precise stall cause remains
+unproven. The revised candidate completes bounded configure/submit ACKs and mixer
+setup in the nonatomic START callback before returning to ALSA. A dedicated
+high-priority worker then handles completion events, avoiding the old asynchronous
+startup delay. It builds with Werror; live qualification is pending.
+
+Read-only module `phase`:0 initial,1 starting,2 hardware started/worker queued,
+3 servicing periods,4 cleanup,5 cleanup returned. This supplements result and
+start/stop counters; it is not proof of audible output. Run future exercisers as
+bounded background processes with log/PID capture so a blocked PCM call does not
+occupy the only network command shell. Inspect the existing process before retry.
