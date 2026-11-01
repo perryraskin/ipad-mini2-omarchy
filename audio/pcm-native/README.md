@@ -31,9 +31,10 @@ it or substitute another board's records. No internal-storage access is involved
 
 Activation requires `allow_pcm=1`, exact J86, 4 KiB pages and matching kernel;
 it also requires an existing **exclusive, healthy** retained transport provider
-(`j86_audio_session_claim`, or the private v2 `j86_pcm_v2_claim`). The first is a
-future integration interface, not a shipped cold-start implementation. Neither
-is recreated by this module. I2C2 must already be enabled and owned by that same
+(`j86_audio_session_claim`, or the private v2 `j86_pcm_v2_claim`). The first is supplied by the build-tested fresh-start candidate in
+[../sio/native-transport](../sio/native-transport/README.md). Neither
+is recreated by this PCM module. The consolidated startup chain still needs live
+qualification. I2C2 must already be enabled and owned by that same
 session. Current generic SIO A7 activation remains blocked; this is **not a turnkey
 fresh-boot audio installer**. Default load refuses before touching hardware.
 
@@ -47,6 +48,7 @@ channel separation, desktop integration or coexistence with touch/Wi-Fi.
 
 `test-playback.c` is the bounded libasound exerciser (link with `-lasound -lm`).
 Modes: `--silence`, `--tone`, `--prepare-close`, `--drop`; durations1..10seconds.
-Tone uses peak1000/32768,500Hz,5ms ramps. Always inspect kernel result and matching
-start/stop counts after close; the helper cannot certify asynchronous cleanup.
+Tone uses peak1000/32768,500Hz,5ms ramps. The helper now reads kernel result after close and fails if cleanup failed or
+status is unavailable. Also inspect matching start/stop counts; this does not
+replace physical or long-duration qualification.
 Physical volume-button handoff and app audio remain in HANDS-ON-QUEUE.md.

@@ -175,6 +175,8 @@ The next physical audio step remains a quiet listening check after codec setup.
    The current session has reset amps and refuses playback; do not unload firmware,
    clear poison, or retry the exploit while Linux remains connected. Coordinate
    recovery/DFU only when the prepared payload and owner are ready.
+   The build-tested [fresh-start chain](audio/sio/native-transport/README.md)
+   replaces the earlier private setup/recovery modules; it remains opt-in.
 3. Qualify corrected stop handling: prepare-close, normal drain, midstream drop,
    next-open/play, result/status counters and verified reset/clock restoration.
    No fresh audible confirmation is needed for the old successful tone.

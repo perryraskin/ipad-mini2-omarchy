@@ -11,6 +11,19 @@ static int set_control(snd_ctl_t *ctl,const char *name,long value)
  snd_ctl_elem_value_set_name(v,name);snd_ctl_elem_value_set_integer(v,0,value);
  return snd_ctl_elem_write(ctl,v);
 }
+/* A successful snd_pcm_drop/close does not prove the asynchronous worker stopped. */
+static int kernel_result(void)
+{
+ const char *paths[]={"/sys/module/j86_pcm_native/parameters/result",
+                      "/sys/module/j86_pcm_v2/parameters/result"};
+ unsigned int i;int result;
+ for(i=0;i<sizeof(paths)/sizeof(paths[0]);++i){
+  FILE *f=fopen(paths[i],"r");if(!f)continue;
+  int n=fscanf(f,"%d",&result);fclose(f);
+  return n==1?result:-EIO;
+ }
+ return -ENODEV;
+}
 int main(int argc,char **argv)
 {
  snd_pcm_t *pcm=NULL;snd_ctl_t *ctl=NULL;snd_pcm_hw_params_t *h;
@@ -55,8 +68,9 @@ int main(int argc,char **argv)
  if(drop)SET(snd_pcm_drop(pcm));else SET(snd_pcm_drain(pcm));rc=0;
 out:
  if(ctl)set_control(ctl,"Speaker Playback Switch",0);
- if(pcm)snd_pcm_close(pcm);
+ if(pcm){int close_rc=snd_pcm_close(pcm);if(rc>=0&&close_rc<0)rc=close_rc;}
+ if(rc>=0)rc=kernel_result();
  if(ctl)snd_ctl_close(ctl);
  if(rc<0){fprintf(stderr,"ALSA failed at frame %u: %s\n",pos,snd_strerror(rc));return 1;}
- printf("PASS: %u frames at48kHz, %s, %s/close complete\n",pos,tone?"quiet500Hz":"muted silence",prepare_only?"prepare":drop?"drop":"drain");return 0;
+ printf("PASS: %u frames at48kHz, %s, %s/close and kernel status verified\n",pos,tone?"quiet500Hz":"muted silence",prepare_only?"prepare":drop?"drop":"drain");return 0;
 }
