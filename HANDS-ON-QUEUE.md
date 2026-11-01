@@ -118,3 +118,9 @@ both amplifier volume registers independently observed changing. Left-only/right
 only playback passed mechanically,12starts/12stops; acoustic separation/mute
 confirmation remains pending. The opt-in bounded physical-key helper is staged
 and awaits owner interaction. Desktop/PipeWire coexistence remains unqualified.
+
+Headless app-audio progress: read-only host root plus RAM runtime now runs the
+opt-in PipeWire/WirePlumber profile in audio/pipewire. Both pw-play and paplay
+completed2s silence with native clean stops,14starts/14stops. Desktop key code's
+sink guard and5% volume command pass against it. Still qualify audible app
+playback, physical keys, and shared-controller desktop/touch/Wi-Fi coexistence.
