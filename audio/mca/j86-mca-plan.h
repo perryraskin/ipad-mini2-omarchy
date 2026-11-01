@@ -14,6 +14,11 @@
 #include <errno.h>
 typedef uint32_t u32;
 #endif
+/* Exact measured J86 MCA1 identity; the ID word is not the decoded version. */
+static inline int j86_mca_identity(u32 id, u32 fifo)
+{
+ return id == 0x00010001 && fifo == 0x00800080;
+}
 #define J86_MCA_WRITES 16
 struct j86_mca_write { u32 offset, value; };
 struct j86_mca_plan {
@@ -24,7 +29,7 @@ struct j86_mca_plan {
 };
 /* External clock (slave) vs NCO1 requested at 12.288 MHz (master).
  * Parent rate and route are deliberately not derived from guessed clocks.
- * reset/flush require bounded busy-clear polls after writes 0 and 1.
+ * Write reset then flush; bounded flush bit0 poll follows write 1.
  * TX stop is followed by a bounded bit0-clear poll at0x44; stock first
  * invokes the IRQ object callback. The plan does not emulate that callback.
  */

@@ -21,7 +21,7 @@ in Unicorn with explicit fake platform callbacks and busy-clear values.
 The C backend matched all 40 modeled configure/start/stop writes for the two descriptors. This is
 model agreement, not physical playback, interrupt qualification. TX stop invokes the modeled IRQ-object callback, writes TX config0 at0x18 and reset1 at0x44, then polls bit0 clear. Stock does not clear the frame-run bit in this observed stop path; do not add an A9 frame-stop write. Busy bits are modeled as immediately clear, not timed hardware.
 Only the fixed 48 kHz/stereo/16-bit bring-up format is admitted by the backend;
-other PCM formats are rejected. Reset/flush require bounded busy-clear polls;
+other PCM formats are rejected. Reset is followed by flush and a bounded flush-bit0 poll;
 the plan cannot simply be written in a loop on real hardware.
 
 MCA1 is `0x20a0c4000`, IRQ148, domain `0x20050`, version1, measured
@@ -65,7 +65,7 @@ Physical stages are ordered in [HANDS-ON-QUEUE.md](../../HANDS-ON-QUEUE.md).
 ## Disabled ASoC bench frontend
 
 `j86-mca.c` connects the fixed A7 backend to Orchard's ASoC/dmaengine lifecycle.
-It supports only48 kHz stereo S16_LE CPU-master TX, bounded reset/flush/stop
+It supports only48 kHz stereo S16_LE CPU-master TX, bounded flush/stop
 polls, SmartIO frame4 and the exact ADT shim mapping: xfer0x21, timeout0,
 FIFO0xcc, trigger0xac. An earlier unused plan field mislabeled0xcc as timeout;
 that field is corrected. No RX, IRQ recovery, pause or suspend/resume stream
@@ -92,3 +92,17 @@ and ran successfully: controller power returned0x200->0x200, MCA1 remained
 version1, and NCO1 remained0x80308000 with zero rate parameters. No audio,
 GPIO or PMIC registers were written. This confirms inventory and cleanup,
 not routing, clocks, DMA, amplifier readiness or playback.
+
+October 31 offline corrections: the frontend now requires the exact measured
+ID word 0x00010001 and FIFO word 0x00800080, rather than comparing the raw ID
+to decoded version 1. Host tests reject wrong IDs and either wrong FIFO depth.
+The stock configure path at 0x863b9a0 writes reset3 then flush1, then polls
+flush bit0 at 0x863b9cc; it does not poll reset before issuing flush. The
+frontend now preserves that order with a bounded 10ms flush timeout.
+`derive-mca.py --stuck-busy flush` independently stops both stock descriptor
+models at the instruction bound with only reset/flush writes, before TX enable.
+Normal configure/start/stop models still complete; the corrected module builds
+against audio2 with warnings as errors. Nothing was loaded on the live iPad.
+Clock parent, switch routing, SIO transport and amplifier qualification remain
+required before audible playback. The current RAM payload embeds the older
+inactive frontend; this rebuilt sidecar is not a newly booted kernel.

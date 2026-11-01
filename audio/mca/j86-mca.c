@@ -96,9 +96,11 @@ static int mca_prepare(struct snd_pcm_substream *s,struct snd_soc_dai *dai)
  for (i=0;i<J86_MCA_CONFIGURE_COUNT;i++) {
   const struct j86_mca_write *w=&m->plan.configure[i];
   writel(w->value,m->base+w->offset);
-  if (i<2) {
-   u32 mask=i ? 1 : 3;
-   ret=readl_poll_timeout(m->base+w->offset,value,!(value&mask),10,10000);
+  /* A7 stock writes reset then flush, and polls only flush bit0.
+   * Waiting for reset before issuing flush is not the observed protocol.
+   */
+  if (i==1) {
+   ret=readl_poll_timeout(m->base+w->offset,value,!(value&1),10,10000);
    if (ret) return ret;
   }
  }
@@ -184,7 +186,7 @@ static int mca_probe(struct platform_device *pdev)
  ret=pm_runtime_resume_and_get(dev);if (ret<0) return ret;
  version=readl(m->base);fifo=readl(m->base+4);
  pm_runtime_put_sync_suspend(dev);
- if (version!=1 || (fifo&0x3ff)!=128) return -ENODEV;
+ if (!j86_mca_identity(version,fifo)) return -ENODEV;
  m->tx.addr_width=DMA_SLAVE_BUSWIDTH_2_BYTES;m->tx.maxburst=1;
  ret=devm_snd_soc_register_component(dev,&mca_component,&mca_dai,1);if (ret) return ret;
  return devm_snd_dmaengine_pcm_register(dev,&mca_pcm,0);

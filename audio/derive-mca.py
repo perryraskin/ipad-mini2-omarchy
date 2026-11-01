@@ -9,7 +9,7 @@ import argparse,hashlib,importlib.util,pathlib,struct
 from unicorn import Uc,UcError,UC_ARCH_ARM64,UC_MODE_ARM,UC_HOOK_CODE,UC_HOOK_MEM_READ,UC_HOOK_MEM_WRITE
 from unicorn.arm64_const import UC_ARM64_REG_X0,UC_ARM64_REG_X1,UC_ARM64_REG_X2,UC_ARM64_REG_X3,UC_ARM64_REG_X4,UC_ARM64_REG_X5,UC_ARM64_REG_X6,UC_ARM64_REG_X7,UC_ARM64_REG_X30,UC_ARM64_REG_SP,UC_ARM64_REG_PC
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('kernelcache',type=pathlib.Path);parser.add_argument('--lifecycle-model',action='store_true');parser.add_argument('--nco-model',action='store_true');parser.add_argument('--nco-parent-rate',type=int,default=342857142);args=parser.parse_args()
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('kernelcache',type=pathlib.Path);parser.add_argument('--lifecycle-model',action='store_true');parser.add_argument('--nco-model',action='store_true');parser.add_argument('--nco-parent-rate',type=int,default=342857142);parser.add_argument('--stuck-busy',choices=('flush',),help='Offline non-clearing configure poll; expect instruction-bound stop before TX');args=parser.parse_args()
 assert hashlib.sha256(args.kernelcache.read_bytes()).hexdigest()=='d173a651d02329a02d2f23c2859e1e54308a5e94da86ba729777efeb3503da08','Expected exact iPad4,5 16H88 stock kernelcache'
 spec=importlib.util.spec_from_file_location('prelink',ROOT/'research/read-prelink.py');helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
 _,segments,data=helper.prelink(args.kernelcache)
@@ -59,7 +59,7 @@ def code(mu,addr,size,user):
   raise RuntimeError('Unmodeled call '+hex(addr)+' from '+hex(mu.reg_read(UC_ARM64_REG_X30)))
 def read(mu,access,addr,size,value,user):
  offset=addr-MMIO;v=state.get(offset,0)
- if offset in (0x44,0x48):v=0 # explicitly modeled self-clearing reset/busy state
+ if offset in (0x44,0x48) and offset!={'flush':0x48}.get(args.stuck_busy):v=0 # modeled self-clearing unless fault injected
  w32(addr,v)
 def write(mu,access,addr,size,value,user):
  offset=addr-MMIO;state[offset]=value&0xffffffff;log.append('write +%04x = %08x'%(offset,value&0xffffffff))
@@ -84,7 +84,15 @@ def run(title,descriptor):
   rc=call(0x863c61c,obj,2);print('start TX rc',hex(rc))
   if args.lifecycle_model:
    rc=call(0x863c8f8,obj,2);print('stop TX rc',hex(rc))
- except (RuntimeError,UcError) as error:print('INCOMPLETE MODEL:',error,'PC',hex(uc.reg_read(UC_ARM64_REG_PC)))
+ except (RuntimeError,UcError) as error:
+  if not args.stuck_busy:raise
+  assert isinstance(error,RuntimeError) and str(error).startswith('Instruction limit reached'),error
+  expected=['write +0044 = 00000003','write +0048 = 00000001']
+  assert [line for line in log if line.startswith('write ')]==expected,log
+  print('EXPECTED NON-CLEARING POLL: instruction bound reached before any TX enable')
+ else:
+  assert not args.stuck_busy,'Injected busy bit unexpectedly cleared'
+
  for line in log:print(' ',line)
  print('Model only; no playback claim.\n')
 # Exact common speaker template, not device calibration or firmware bytes.

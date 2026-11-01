@@ -148,3 +148,7 @@ Wi-Fi connection attempt was denied by session policy before password
 authentication. A scoped RAM-only policy now grants the required NM actions
 to tablet, verified live as yes. Perry is retrying Connect in the existing
 panel; association and native internet validation remain pending.
+
+October 31 follow-up: Perry reports touch working well after native Wi-Fi and
+DNS qualification. This is a combined-session observation, not a long-duration
+stress-test result. Native HTTPS returned 200 and NM connectivity full.

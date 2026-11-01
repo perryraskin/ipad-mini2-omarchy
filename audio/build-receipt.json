@@ -7,7 +7,7 @@
   "payload_activation": false,
   "firmware_included": false,
   "private_payload_sha256": "7e5f85c183413f77f0de9cc4a1b476241e55de7102f3ad18362243dbadf10f9b",
-  "mca_module_sha256": "f50a1d61e271a17381611c45e22e1f28dc396eeaee405bdf1b4dd6bc72c35550",
+  "mca_module_sha256": "644e19bfd647b3286cfec85b8d4c5a2ece52548ca841b38140deb9d2ea9e7e96",
   "oscar_module_sha256": "006a179c0bb4b7e3167b5689add43d7794426b55267beb7dd0edfb099e64dd07",
   "source_notes": [
     "MCA pre-routed muted-bench only; no speaker driver",
@@ -16,5 +16,6 @@
     "No DT hardware activation or default-profile switch"
   ],
   "live_controller_inventory": "passed; balanced power restored; no audio/GPIO/PMIC writes",
-  "playback_qualified": false
+  "playback_qualified": false,
+  "mca_sidecar_followup": "exact measured ID/FIFO guard and stock reset-then-flush polling order; strict build passed; not loaded"
 }

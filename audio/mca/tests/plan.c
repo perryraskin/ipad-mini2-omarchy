@@ -5,6 +5,11 @@
 int main(void)
 {
  struct j86_mca_plan p;
+ assert(j86_mca_identity(0x00010001,0x00800080));
+ assert(!j86_mca_identity(1,0x00800080));
+ assert(!j86_mca_identity(0x00020001,0x00800080));
+ assert(!j86_mca_identity(0x00010001,0x00400080));
+ assert(!j86_mca_identity(0x00010001,0x00800040));
  for (unsigned int master=0; master<2; master++) {
   assert(!j86_mca_plan(48000,2,16,master,&p));
   for (unsigned int i=0; i<J86_MCA_CONFIGURE_COUNT; i++)
