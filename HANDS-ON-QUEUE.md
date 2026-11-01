@@ -143,3 +143,8 @@ Network passphrase focus regression: touch-mode environment was missing.
 It is now enabled for launch/restart and the current shell was refreshed.
 Perry must confirm typing reaches the masked password field rather than
 Terminal; do not capture credentials in diagnostics.
+
+Wi-Fi connection attempt was denied by session policy before password
+authentication. A scoped RAM-only policy now grants the required NM actions
+to tablet, verified live as yes. Perry is retrying Connect in the existing
+panel; association and native internet validation remain pending.

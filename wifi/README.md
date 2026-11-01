@@ -65,3 +65,19 @@ The Quickshell shell initially selected no networking backend because it
 started before NetworkManager. Restarting only that shell process after
 NetworkManager became available cleared the backend error and the network
 panel IPC opened successfully; existing app/compositor processes were kept.
+
+Connection UI initially failed with NetworkManager
+“Not authorized to control networking.” The RAM chroot has no active local
+PAM/logind session, so the image's active-session rules did not authorize
+the tablet user. Explicit setup now preserves existing rules and adds a
+RAM-only rule for user tablet: network control, Wi-Fi enable/disable and
+scan, and own/system connection-profile modification. Connection profiles
+remain RAM-backed and USB remains strictly unmanaged. The tablet user's
+five required permissions were verified as yes live. The controller unmounts
+the policy bind during teardown. No wildcard or general administrator grant.
+
+The source Wi-Fi inline failure label now uses the supplied failure reason
+rather than categorizing every failure as a wrong password. Immediate D-Bus
+authorization failures in the upstream backend may still appear only in its
+log until the existing action timeout; use explicit permission checks when
+diagnosing them. No password was read or logged in this investigation.
