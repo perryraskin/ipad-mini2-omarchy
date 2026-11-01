@@ -85,3 +85,10 @@ an external strict build against the complete matching export table. No payload
 or boot profile is produced. See the consolidated checklist before any bench work.
 
 A private audio2 RAM payload and matching touch/HSIC/host sidecars are now prepared, with all experimental gates off and no proprietary wireless/audio/Oscar firmware embedded. `audio/build-receipt.json` records build results and hashes; physical boot remains pending. The default controller profile remains known-good.
+
+October31: audio2 RAM boot and aligned touch were physically confirmed.
+The bounded controller inventory was rebuilt against the exact audio2 headers
+and ran successfully: controller power returned0x200->0x200, MCA1 remained
+version1, and NCO1 remained0x80308000 with zero rate parameters. No audio,
+GPIO or PMIC registers were written. This confirms inventory and cleanup,
+not routing, clocks, DMA, amplifier readiness or playback.

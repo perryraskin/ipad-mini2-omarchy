@@ -13,6 +13,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/string.h>
 #include <linux/utsname.h>
+#include <generated/utsrelease.h>
 
 #define MCA1_BASE 0x20a0c4000ULL
 #define MCA1_SIZE 0x4000
@@ -32,7 +33,7 @@ static int __init j86_audio_controller_probe_init(void)
  const u32 offsets[] = { 0,4,8,12,16,20,24,28,32,36,44,48,52,56,64,68,72 };
 
  if (!of_machine_is_compatible("apple,j86") || PAGE_SIZE != 4096 ||
-     strcmp(utsname()->release, "7.0.12-gdfa4d4208131-dirty")) {
+     strcmp(utsname()->release, UTS_RELEASE)) {
   pr_err(TAG "exact board/kernel/page guard refused\n");
   return -ENODEV;
  }

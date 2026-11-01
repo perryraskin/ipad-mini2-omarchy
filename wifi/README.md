@@ -60,3 +60,8 @@ while native Wi-Fi was enabled. Rejected touch packets were also counted;
 the intermittent stall cause is not established. A slower-clock diagnostic
 module built locally but was not loaded. Stable coexistence is not yet claimed.
 EHCI disable restored its power register exactly in the live test.
+
+The Quickshell shell initially selected no networking backend because it
+started before NetworkManager. Restarting only that shell process after
+NetworkManager became available cleared the backend error and the network
+panel IPC opened successfully; existing app/compositor processes were kept.

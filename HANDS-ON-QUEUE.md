@@ -116,3 +116,7 @@ with native Wi-Fi enabled after touch reinitialization. A rescan then
 returned successfully. This does not establish the prior stall cause. Wi-Fi
 association remains pending through the iPad menu; do not load the inactive
 slower-clock diagnostic unless another failure justifies that comparison.
+
+Audio2 bounded MCA1 inventory passed with exact power restoration and no
+audio/GPIO/PMIC writes. No playback claim. Quickshell was refreshed after
+NetworkManager startup and the Wi-Fi panel was opened for Perry to connect.

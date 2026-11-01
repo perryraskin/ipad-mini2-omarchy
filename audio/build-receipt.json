@@ -3,7 +3,7 @@
   "build_result": "passed",
   "strict_mca_module_build": "passed",
   "strict_oscar_module_build": "passed",
-  "boot_tested": false,
+  "boot_tested": true,
   "payload_activation": false,
   "firmware_included": false,
   "private_payload_sha256": "7e5f85c183413f77f0de9cc4a1b476241e55de7102f3ad18362243dbadf10f9b",
@@ -14,5 +14,7 @@
     "Oscar receive framing only; no report decoder or sensor subscription",
     "brcmfmac exact J86 firmware gate defaults off",
     "No DT hardware activation or default-profile switch"
-  ]
+  ],
+  "live_controller_inventory": "passed; balanced power restored; no audio/GPIO/PMIC writes",
+  "playback_qualified": false
 }
