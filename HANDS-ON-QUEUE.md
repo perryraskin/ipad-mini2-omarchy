@@ -64,11 +64,29 @@ Completed October31: known-good RAM desktop recovered; scale2 taps physically co
    serial/USB, timekeeping, display, touch, wireless/audio and measured power use.
    Do not expose suspend in the menu until repeated resume works. Deep A7 suspend
    needs platform resume support beyond the experimental kernel config.
-10. **HDMI last.** With touch stable, start a bounded adapter observation, swap Mac
+10. **Qualify HDMI external display.** With touch stable, start a bounded adapter observation, swap Mac
     Lightning for the Apple HDMI adapter and ready monitor, then reconnect the Mac
     cable without button presses. Record monitor output/detection. The LG5K is a
     suitable HDMI sink; the adapter determines output resolution. Video output is
     unimplemented/unverified and must not be promised from detection alone.
+
+
+11. **Bluetooth and directly connected input peripherals — only after HDMI is qualified.**
+    Do not start Bluetooth bring-up before step10 is complete. Prefer native
+    iPad Bluetooth for a mouse, trackpad and keyboard. Qualify the controller
+    and required firmware/transport, then pair and test each peripheral:
+    pointer movement, left/right click, scrolling and supported trackpad
+    gestures; keyboard text, modifiers, layout and key repeat. Test reconnect
+    after peripheral power-off/on and the qualified screen-off/wake path,
+    then combined use with HDMI, Wi-Fi and touch. Record unsupported features
+    separately from successful basic input.
+    If native BT needs a wired fallback during bring-up, note the exact
+    USB/Lightning adapter chain: an Apple Lightning to USB Camera Adapter
+    (powered USB3 version if needed), powered hub where required, and a
+    USB-compatible mouse/trackpad/keyboard. Test direct wired input separately
+    from native Bluetooth. Cable/adapter swaps must preserve a recovery path
+    for the Mac-backed RAM session; queue those physical swaps rather than
+    unplugging its active root connection without preparation.
 
 Record dated results and exact profile/commit next to each step when run. Do not
 mark a stage passed based solely on host models, synthetic events or compilation.
