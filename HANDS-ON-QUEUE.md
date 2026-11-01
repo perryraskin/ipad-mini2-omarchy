@@ -120,3 +120,8 @@ slower-clock diagnostic unless another failure justifies that comparison.
 Audio2 bounded MCA1 inventory passed with exact power restoration and no
 audio/GPIO/PMIC writes. No playback claim. Quickshell was refreshed after
 NetworkManager startup and the Wi-Fi panel was opened for Perry to connect.
+
+Network passphrase focus regression: touch-mode environment was missing.
+It is now enabled for launch/restart and the current shell was refreshed.
+Perry must confirm typing reaches the masked password field rather than
+Terminal; do not capture credentials in diagnostics.

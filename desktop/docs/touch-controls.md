@@ -50,3 +50,10 @@ controls finger-sized across Omarchy theme changes. Rendering is verified;
 Perry physically confirmed title-bar dragging and corner resizing after touch recovery. A landscape-sized viewer
 retained a width beyond the portrait output, leaving controls off-screen;
 portrait Terminal is being used to separate window geometry from touch input.
+
+Launch and restart environments now set `OMARCHY_TOUCH_MODE=1`. The shipped
+Quickshell KeyboardPanel then keeps exclusive keyboard focus while open and
+places panels below the native virtual keyboard. Without that environment,
+the passphrase panel reverted to OnDemand and typing remained in Terminal.
+The corrected live shell environment is verified; password-entry confirmation
+is pending. Do not collect field contents or terminal text during this test.
