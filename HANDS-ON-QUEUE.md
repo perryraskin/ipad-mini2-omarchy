@@ -133,11 +133,18 @@ Two-second passive UART observation saw no bytes and restored power. Neither
 result is playback, sensor-stream or automatic-rotation qualification.
 Perry requested pausing touchscreen work; remaining rotation tests stay queued.
 
-## Current audio recovery prerequisite
+## Current audio connection prerequisite
 
-A bounded private SIO experiment received firmware READY but did not restore its
-power domain. Stop device-side audio experiments in this session. Recover the
-isolated audio2 RAM boot via the usual Home/Power DFU and Pongo reconnect steps;
-then inspect SIO power before any further writes. No internal-storage restore or
-erase is needed. Firmware boot-time power ownership must be fixed before repeating
-the experiment. Speakers and volume remain unqualified; see audio/sio/HANDOFF.md.
+Perry completed DFU recovery and sees Pongo's chess logo. The Mac still does not
+see its USB device after Lightning and USB-A reconnections. Next physical step:
+try the known-working USB-A data cable in another USB-A port/adapter, keeping the
+iPad in Pongo and avoiding button presses. Check USB enumeration before uploading
+anything; do not blindly repeat DFU or the exploit.
+
+The private SIO READY test failed its strict restoration check. The initial
+stuck-power diagnosis is corrected: the PMGR value is consistent with automatic
+clock gating, not proof of a stuck transition. Shared SPI/UART/MCA DMA startup
+writes still need ownership and cleanup qualification. Once connected, boot
+isolated audio2 with SIO off, inventory those resources, then continue audio.
+Speakers and volume remain unqualified; see audio/sio/HANDOFF.md. No internal
+storage restore or erase is needed. Touchscreen work remains paused.

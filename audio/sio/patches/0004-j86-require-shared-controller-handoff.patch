@@ -1,0 +1,23 @@
+From: Perry Raskin <perryraskin@gmail.com>
+Subject: [PATCH] soc: apple: sio: block A7 activation pending shared DMA ownership
+
+Exact owner firmware model resets peripheral DMA controls before READY.
+No audio-only boot opt-in may bypass that unresolved shared ownership.
+Other SoCs are unchanged. A7 sources remain buildable for bring-up.
+
+--- a/drivers/soc/apple/apple-sio-core.c
++++ b/drivers/soc/apple/apple-sio-core.c
+@@ -1023,6 +1023,13 @@
+ 		return dev_err_probe(dev, -EPERM,
+ 				     "Experimental J86 SIO boot disabled or wrong board/page size\n");
+ 
++	/* Firmware startup resets 32 peripheral DMA controls before READY.
++	 * An audio-only mapping lease cannot establish ownership of those blocks.
++	 * Keep A7 compile-only until a shared-controller handoff is implemented. */
++	if (hw->legacy_a7)
++		return dev_err_probe(dev, -EOPNOTSUPP,
++				     "J86 shared-peripheral firmware handoff is not implemented\n");
++
+ 	sio = devm_kzalloc(dev, sizeof(*sio), GFP_KERNEL);
+ 	if (!sio)
+ 		return -ENOMEM;

@@ -22,6 +22,7 @@ are needed before testing firmware boot; a reboot alone is not that proof.
 
 The expanded live inventory found both mailboxes empty and disabled, with a
 stable inherited mapping. A subsequent separate private READY-only experiment
-received the expected firmware READY message, but failed power restoration.
-The inventory then refused a transitional power-domain state. Do not retry boot
+received the expected firmware READY message, but failed its strict restoration check.
+The inventory then refused a state consistent with automatic clock gating;
+the initial transitional/stuck interpretation was too strong. Do not retry boot
 in that session. See `audio/sio/HANDOFF.md`; this does not qualify playback.

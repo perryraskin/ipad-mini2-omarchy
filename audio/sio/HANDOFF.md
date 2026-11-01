@@ -13,14 +13,42 @@ and empty disabled mailboxes. A separate private, explicitly enabled polling
 experiment received the expected `0x036d0000` READY message from the exact owner
 firmware. It sent no setup/DMA messages and made no amplifier writes.
 
-## Failed cleanup: recovery required
+## Cleanup remains unqualified; power diagnosis corrected
 
-That experiment did **not** pass restoration. The SIO power domain changed from
-fully on to a transitional state, and a subsequent inventory correctly refused
-access. CPU-stop readback did not report failure, but that alone is insufficient
-for a clean handoff. Do not call the experiment qualified, integrate it into the
-normal boot, or repeat it in the same session. Its draft stays private and is not
-part of this published source checkpoint. Internal storage was not accessed.
+The private experiment did **not** pass its exact-word restoration check. The
+initial description of the observed PMGR value as a stuck/transitional power
+state was too strong. The Linux Apple PMGR provider explicitly recognizes
+AUTO_ENABLE with target ACTIVE even when hardware has clock-gated the block.
+`power-state.py` distinguishes controls from PS_AUTO, PS_ACTUAL and historical
+status bits. The observed change is consistent with automatic clock gating and
+unchanged control fields. It is not proof of a firmware PMGR write or damage.
+
+This correction does not retroactively qualify cleanup: individual mailbox,
+remap, timer and peripheral restoration was not captured sufficiently to establish
+it. CPU-stop readback alone is insufficient. The private boot probe stays blocked.
+Internal storage was not accessed. Recovery has reached Pongo on-screen, but its
+USB device has not enumerated; no new Linux boot has been uploaded.
+
+## Firmware startup affects shared peripherals
+
+`audio/derive-firmware-start.py` executes the exact private firmware from its
+reset vector through its READY mailbox write in Unicorn. Under explicitly
+zero-filled MMIO, it records 121 MMIO writes, including three writes (0,0,1) to
+each of 32 DMA control registers across sixteen peripheral bases. The owner ADT
+maps affected bases to SPI, UART and MCA devices, including SPI1, UART4 and MCA1.
+Thus sending no DMA commands does not mean firmware startup makes no DMA-register
+writes. This makes an audio-only ownership lease insufficient.
+
+The model observes no PMGR writes before READY. It stops there and does not
+model post-READY behavior, hardware automatic gating, interrupts or DMA effects.
+Do not infer a cause for the live power change from this result. Firmware stays
+private; the published model requires its exact hash and contains no firmware.
+
+`derive-iop.py` also executes the stock inherited stop method with exact A7
+virtual overrides. It clears RX enable, disables two modeled interrupt sources,
+clears CPU_RUN, and calls the provider callbacks; the remap-disable override is a
+no-op, leaving the inherited mapping enabled. IRQ/provider callbacks are fakes,
+so this is sequencing evidence, not proof of live quiescence or buffer lifetime.
 
 BusyBox insmod also made a fallback initialization attempt after the first init
 returned an error. The fallback refused before writes. Use the dedicated
@@ -29,12 +57,16 @@ future experiments; never BusyBox insmod for an init-that-cleans-up probe.
 
 ## Next audio work
 
-1. Recover the isolated audio2 RAM boot and re-inventory the initial power state.
-2. Trace firmware boot-time PMGR writes and define a real power-domain ownership
-   and stop protocol. A passive power lease is insufficient for firmware boot.
-3. Rework the private probe cleanup and verify failure paths before another run.
+1. Re-establish Pongo USB enumeration, then boot isolated audio2 with SIO off.
+2. Inventory the shared peripheral DMA controls and their Linux owners before
+   considering another firmware boot. Do not reset active SPI/UART/MCA engines.
+3. Implement ownership and cleanup for the complete startup footprint, with
+   per-component receipts and status/control-aware power checks. Never free a
+   DMA-visible buffer until its producer and all relevant DMA engines quiesce.
 4. Qualify shared regions, IRQ handling, muted cyclic DMA, NCO and Switch3.
 5. Only then qualify the two exact CS35L19 configurations and a quiet tone.
 
 No ALSA playback card, speaker output, or volume-key audio mode is qualified.
-The inherited-remap guard in patch 0002 remains in place and boot defaults off.
+The inherited-remap guard in patch 0002 remains in place. Patch 0004 blocks A7
+probe before power/MMIO access even with the experimental parameter enabled,
+until shared-peripheral handoff exists. Other SoCs are unchanged.

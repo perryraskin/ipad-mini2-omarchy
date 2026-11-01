@@ -157,7 +157,7 @@ The baseline build has no complete export table and is not load-qualified.
 
 The exact stock SmartIO constructor references a 464208-byte firmware section.
 A private extractor verifies the cache hash, module identity, pointer, section
-mapping and length. Firmware remains private and unbooted. No SIO firmware,
+mapping and length. Firmware remains private. A later isolated READY-only experiment is described in audio/sio/HANDOFF.md. No SIO firmware,
 DMA-engine or PCM support is enabled by publishing these experimental sources.
 
 
@@ -196,6 +196,13 @@ see audio/clock-evidence.md. Actual mux/gate ownership remains unqualified.
 The SIO core, cyclic DMA and exact virt-dma dependency build strictly for audio2.
 A live passive inventory found SIO domain on, remap-enable1 and CPU-control0,
 with the entire power word unchanged. The draft now refuses inherited remaps
-before firmware allocation or programming. No SIO firmware boot/DMA/audio test.
+before firmware allocation or programming. A later private test observed firmware READY, but cleanup and playback remain unqualified; see audio/sio/HANDOFF.md.
 A two-second inherited-settings UART4 receive observation saw zero bytes and
 restored domain0x200. No command/reset/baud writes or acceleration claims.
+
+Latest audio evidence: the exact firmware startup model resets 32 peripheral DMA
+controls before READY, spanning SPI/UART/MCA resources. A7 activation is now
+blocked pending shared-resource ownership, even with its explicit opt-in. The
+stock stop model preserves the remap. The observed PMGR change is consistent
+with auto clock gating; the previous stuck-power diagnosis was too strong. No
+speaker, ALSA playback or volume-mode qualification is claimed.

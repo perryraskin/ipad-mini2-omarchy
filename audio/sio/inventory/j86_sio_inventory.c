@@ -51,7 +51,7 @@ static int __init j86_sio_inventory_init(void)
   goto read_controls;
  }
  if (before & 0xff) {
-  pr_err(TAG "SIO not idle/off (0x%08x); refusing ownership\n", before);
+  pr_err(TAG "SIO not forced-active/off (0x%08x); auto-gating possible; refusing MMIO\n", before);
   rc = -EBUSY; goto out;
  }
  dev = root_device_register("j86-sio-inventory");

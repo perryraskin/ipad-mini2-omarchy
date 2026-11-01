@@ -34,3 +34,5 @@ jobs:
       - run: python desktop/tests/browser-start.py
       - run: cc -std=c11 -Wall -Wextra -Werror audio/switch/tests/plan.c -o /tmp/j86-switch-plan && /tmp/j86-switch-plan
       - run: cc -std=c11 -Wall -Wextra -Werror audio/nco/tests/plan.c -o /tmp/j86-nco-plan && /tmp/j86-nco-plan
+      - run: python audio/sio/tests/power-state.py
+      - run: cc -std=c11 -Wall -Wextra -Werror audio/tests/load-once.c -o /tmp/j86-load-once-test && /tmp/j86-load-once-test
