@@ -95,3 +95,10 @@ muted stream. STOP cleanup still failed with -EPROTO; the stopped RX diagnostic
 found no queued events. Handling of Orchard channel-idle notifications and STOP
 packet diagnostics now builds and passes host regressions, but needs a fresh
 RAM boot and live drain/drop/restart tests. Stable audio remains unqualified.
+
+Follow-up on the next fresh boot: prepare-close and the full muted one-second
+normal drain both passed with kernel result0. Interrupted playback exposed a
+valid partial completion (80 bytes) rejected by STOP cleanup. The handler now
+accepts bounded partial byte counts for owned descriptors, with exhaustive host
+coverage of0..4096; overflow/unknown error codes still fail. This correction is
+build-tested only; fresh-boot drop/restart and audible/volume tests remain.

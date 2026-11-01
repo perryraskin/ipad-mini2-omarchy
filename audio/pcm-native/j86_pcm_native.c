@@ -175,8 +175,9 @@ static int stop_dma(void)
   tag=(msg>>8)&255;op=(msg>>16)&255;param=(msg>>24)&255;value=msg>>32;
   if(op==0x65 && tag==15 && value==8){stopped=true;}
   else if(op==0x65 && (tag==2||tag==3) && value==6){}
+  /* STOP may interrupt a descriptor: data is bytes moved, not requested. */
   else if(op==0x68 && (tag==2||tag==3) && param==0x80 &&
-          (value==PERIOD||value==(u32)-32) && (pending_slots&BIT(tag-2)))pending_slots&=~BIT(tag-2);
+          (value<=PERIOD||value==(u32)-32) && (pending_slots&BIT(tag-2)))pending_slots&=~BIT(tag-2);
   /* Orchard SIO: bit7 clear is channel idle; its tag is not a request.
    * It never retires a pending buffer or substitutes for the STOP ACK. */
   else if(op==0x68 && !(param&0x80)){}

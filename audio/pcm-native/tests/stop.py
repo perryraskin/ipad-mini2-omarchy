@@ -32,6 +32,16 @@ pending_slots=3;pos=0;count=4;messages[0]=msg(0x65,3,0,6);messages[1]=msg(0x68,2
 assert(stop_dma()==0&&pending_slots==0&&pos==4);
 pending_slots=1;pos=0;count=1;messages[0]=msg(0x65,15,0,8);assert(stop_dma()==-ETIMEDOUT&&pending_slots==1);
 pending_slots=1;pos=0;count=1;messages[0]=msg(0x68,3,128,(u32)-32);assert(stop_dma()==-EPROTO);
+/* Every bounded partial byte count is legal during stop, including observed80. */
+for(unsigned bytes=0;bytes<=PERIOD;++bytes){
+ pending_slots=3;pos=0;count=3;messages[0]=msg(0x65,15,0,8);
+ messages[1]=msg(0x68,3,128,bytes);messages[2]=msg(0x68,2,128,(u32)-32);
+ assert(stop_dma()==0&&pending_slots==0&&pos==3);
+}
+pending_slots=1;pos=0;count=1;messages[0]=msg(0x68,2,128,PERIOD+1);
+assert(stop_dma()==-EPROTO&&pending_slots==1);
+pending_slots=1;pos=0;count=1;messages[0]=msg(0x68,2,128,(u32)-5);
+assert(stop_dma()==-EPROTO&&pending_slots==1);
 /* Idle tags are meaningless, including tags outside the descriptor set. */
 for(unsigned t=0;t<256;++t){
  pending_slots=3;pos=0;count=5;
