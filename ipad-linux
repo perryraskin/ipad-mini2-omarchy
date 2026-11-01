@@ -205,7 +205,9 @@ def stop(reboot=True):
   if not alive.strip():break
   time.sleep(.3)
  if alive.strip():raise RuntimeError('Desktop processes still running; refusing to unmount. Inspect status.')
- result=network('set -e; for n in home/tablet/.local/share/omarchy-ipad/themes home run tmp dev/shm dev/pts dev sys proc; do if grep -q " /mnt/omarchy/$n " /proc/mounts; then umount "/mnt/omarchy/$n"; fi; done; if grep -q " /ram-home/tablet/.local/share/omarchy-ipad/themes " /proc/mounts; then umount /ram-home/tablet/.local/share/omarchy-ipad/themes; fi; if grep -q " /mnt/omarchy-base " /proc/mounts; then umount /mnt/omarchy-base; fi; umount /mnt/omarchy; busybox nbd-client -d /dev/nbd2; echo ROOT_DETACHED')
+ if network('test -f /sys/module/j86_wifi_host/parameters/enabled && busybox cat /sys/module/j86_wifi_host/parameters/enabled').strip()=='Y':
+  print(network('set -e; busybox ip link set wlan0 down; echo N >/sys/module/j86_wifi_host/parameters/enabled; echo WIFI_HOST_STOPPED'),end='')
+ result=network('set -e; for n in etc/NetworkManager/system-connections var/lib/NetworkManager home/tablet/.local/share/omarchy-ipad/themes home run tmp dev/shm dev/pts dev sys proc; do if grep -q " /mnt/omarchy/$n " /proc/mounts; then umount "/mnt/omarchy/$n"; fi; done; if grep -q " /ram-home/tablet/.local/share/omarchy-ipad/themes " /proc/mounts; then umount /ram-home/tablet/.local/share/omarchy-ipad/themes; fi; if grep -q " /mnt/omarchy-base " /proc/mounts; then umount /mnt/omarchy-base; fi; umount /mnt/omarchy; busybox nbd-client -d /dev/nbd2; echo ROOT_DETACHED')
  print(result,end='')
  if 'ROOT_DETACHED' not in result:raise RuntimeError('Root detach was not confirmed; refusing reboot.')
  network('sync')

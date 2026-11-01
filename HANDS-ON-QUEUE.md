@@ -98,3 +98,9 @@ not platform suspend or reduced touch-controller power.
 Perry physically confirmed Terminal corner resizing after touch recovery.
 Title-bar dragging and resizing, long-press, minimized-window restoration,
 and touch after screen blank/wake now have separate physical confirmations.
+
+Experimental audio2 RAM boot is now physically confirmed with aligned touch.
+Native brcmfmac accepted the exact staged firmware and scanned27network rows.
+NetworkManager uses only RAM profiles/state and leaves usb0 unmanaged. Perry
+is testing association through the network menu; DHCP/DNS/native HTTPS and
+host-disable power restoration remain pending. App installs remain disabled.
