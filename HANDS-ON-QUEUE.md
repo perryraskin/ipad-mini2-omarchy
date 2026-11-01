@@ -1,192 +1,92 @@
 # Ordered physical validation checklist
 
-This is the single physical test queue for Perry's return. No action is needed
-until a listed physical check is requested. The audio2 RAM candidate is currently running;
-source-only release updates are documented in updates/README.md. Do not restore, repartition, flash or install to iPad internal
-storage. New Wi-Fi/audio/motion/suspend code is inactive by default. Candidate
-builds are experiments, not a daily-use release. Stop a stage on unexpected
-output and retain its logs before advancing.
+**Paused at Perry's request.** Perry is taking a break and powering off the Mac.
+Do not start another physical step, request DFU/reconnection, start a RAM boot,
+or keep the RAM session alive. Resume only when Perry returns and says ready.
+The order below applies after resuming; historical notes do not override it.
 
-Earlier October31 checks (current results below supersede pending status): known-good RAM desktop recovered; scale2 taps physically confirmed reliable with stock Labwc. New bottom window bar physically confirmed to restore minimized apps. Long-press compositor tap-frame fix passes handler tests; Perry confirmed reliable quick taps and title-bar hold menu together. Perry also confirmed short Power screen-off, wake, and held Power menu. True SoC suspend remains unqualified. Manual landscape applied; physical touch/resize check is pending after app-launch freezes. Restored portrait after inaccessible viewer controls; increased title buttons to48logical pixels and opened a smaller Terminal for drag/resize qualification. Signed swayimg installation and actual rendering succeeded, but install-load latency and browser responsiveness are not qualified; installer is hidden again.
+Never restore, repartition, flash, erase or install to iPad internal storage.
+Candidate code remains opt-in. Builds and host tests are not hardware qualification.
+Stop on unexpected output and retain diagnostics before advancing.
 
-1. **Reconnect and recover the known-good session.** Reconnect the qualified
-   USB-A-to-Lightning cable through the Mac adapter. Inspect USB, network/serial,
-   running kernel and current screen before changing anything. The last180/270°
-   rotation test lost USB before acknowledgment; its cleanup is unknown. Restore
-   portrait with `j86-rotate portrait` once reachable. If reboot is necessary,
-   use DFU and the known-good RAM boot. This recovery step has been completed for the current audio2 session. Verify Mac Local Network permission and
-   a real connection before repeating boot attempts.
-2. **Confirm touch and session controls.** At scale2, tap Terminal and all four
-   corners. Check short tap, scrolling, dragging and second finger. Hold still
-   about0.6s in Firefox and on a window: a context menu should open without a
-   preceding left-click. Resize using the enlarged outside edge/corner zones.
-   Test Home menu, short Power screen-off/wake and held Power menu; ensure touch
-   restarts. This is screen-off only. Check brightness slider and default volume
-   keys still change brightness. Select audio key mode and verify a missing sink
-   changes neither brightness nor volume; restore brightness key mode afterward.
-3. **Finish manual rotation qualification.** Check portrait,90°,180°,270°, then
-   portrait again. Verify touch alignment in each, window interaction, and restore
-   after desktop restart. Log any output-transform failure before another attempt.
-4. **Recheck Mac-backed apps and browser.** Verify root is read-only and the app
-   store is the separate writable Mac image. Start relay, perform a signed package
-   operation with the prepared write path, open the app and browse HTTPS in Firefox.
-   Check app persistence across a clean detach/remount. Confirm installs stay hidden after ordinary startup; explicitly enable only after write-path qualification. Test a closed installer terminal, verify transaction completion, and ensure failed/uncertain transactions hide installs and refuse restart until reviewed. Never bypass signature
-   checks or write through the read-only root path.
-5. **RAM-boot the inactive candidate.** Prefer the latest prepared audio-candidate (7.0.12-j86-audio2) after verifying profile/module hashes and
-   matching vermagic first. It adds disabled driver drafts and the explicit Wi-Fi firmware gate; its RAM boot and initial touch are now physically confirmed. The older Wi-Fi candidate remains available. Keep Wi-Fi host enable off initially. Recheck touch,
-   backlight and USB before wireless experiments. The installer must remain hidden because app storage has not been qualified on audio2. If any regress, return to the
-   known-good RAM profile; no internal restore.
-6. **Qualify native Wi-Fi in stages.** With RF disabled, verify corrected HSIC
-   enumeration0a5c:bd1c, chip4324 rev6 and private vendor-u calibration/NVRAM.
-   Run bounded firmware version/revinfo/MAC checks on the calibrated blob before
-   RF. The new private driver stage is only a host artifact; do not treat it as
-   an approved scan/association image. The updated brcmfmac module also requires explicit j86_allow_firmware opt-in; verify its default-off gate before enabling. Then qualify brcmfmac firmware acceptance,
-   regulatory state and scan before using Perry's chosen network credentials.
-   Test association, DHCP, DNS, HTTPS, signed package download, clean disable and
-   touch/USB recovery. Keep credentials and identifying logs private.
-7. **Audio: do not start with speakers.** Requires reviewed exact A7 clock/route,
-   IRQ/stop, SIO and amp drivers; the register-plan backend is not a playback
-   driver. First boot the separate audio2 experiment with SIO off, inventory and
-   verify power restoration. Qualify explicit SIO boot and muted cyclic DMA,
-   clocks and FIFO behavior before releasing amp mute/reset. Use both exact private
-   speaker records; no A5/A9 defaults. Only then try a quiet bounded tone, mixer,
-   mute, explicit volume-key mode, and switch back to brightness. Stop on heat,
-   distortion, missing clock or DMA errors.
-8. **Auto-rotation: qualify the sensor before enabling policy.** Requires qualified UART4 baud/power state, explicit receive-only Oscar attach, sensor subscription/report decoder and calibrated IIO acceleration. Verify sensor identity,
-   SI units and signed panel-axis mapping in stationary poses. Run policy dry-run,
-   check flat/diagonal/shaking rejection and stale-stream behavior. Explicitly apply
-   only after mapping is confirmed; check touch and window alignment in every pose.
-   Manual Rotate screen remains the fallback.
-9. **Suspend: isolated recovery experiment only.** The separate suspend1 RAM diagnostic payload is now built with matching USB modules, but unbooted and without a controller profile. Requires a self-contained
-   RAM root with all NBD mounts detached and app writes flushed. Do not suspend the
-   current Mac-backed root. Inspect candidate state/mem_sleep and wake IRQ handling;
-   test freezer/device stages before a real sleep attempt. Qualify Home/Power wake,
-   serial/USB, timekeeping, display, touch, wireless/audio and measured power use.
-   Do not expose suspend in the menu until repeated resume works. Deep A7 suspend
-   needs platform resume support beyond the experimental kernel config.
-10. **Qualify HDMI external display.** With touch stable, start a bounded adapter observation, swap Mac
-    Lightning for the Apple HDMI adapter and ready monitor, then reconnect the Mac
-    cable without button presses. Record monitor output/detection. Verify the exact LG 5K model and its accepted inputs before testing; some LG 5K displays do not accept HDMI. Use a compatible HDMI monitor/TV if needed. Video output is
-    unimplemented/unverified and must not be promised from detection alone.
+## Remaining physical work, in order
 
+1. **Finish audio.** Inspect USB and the actual boot/session state on return before
+   deciding how to recover. Do not reload SIO firmware, unload retained modules,
+   clear a poisoned-session flag or force a transport handoff. The isolated
+   [audio startup procedure](audio/sio/native-transport/README.md) uses
+   `./ipad-linux --profile audio-candidate --isolated start`; ordinary desktop
+   startup must not run alongside the isolated shared-controller experiment.
+   Qualify muted prepare-close, normal drain, interrupted/drop playback, next-open
+   playback, result/start/stop counters, reset and clock restoration. Then qualify
+   low-volume left/right output, mute/volume, physical volume-key handoff and
+   return to brightness mode, sustained playback and app audio. Restore desktop,
+   touch and Wi-Fi coexistence only after shared ownership is resolved. Stop on
+   heat, distortion, missing clock or DMA errors. Use only exact private J86
+   firmware and speaker records; no other-board calibration defaults.
+2. **HDMI external display — next after audio.** Prepare a bounded observation
+   and a safe recovery path before swapping the Mac Lightning cable for Perry's
+   Apple Lightning Digital AV adapter. Verify the exact LG 5K model and accepted
+   inputs; some LG 5K models do not accept HDMI. Use a compatible monitor/TV if
+   needed. Record detection and actual output, then qualify resolution and desktop
+   usability. Detection alone does not prove video output. Coordinate cable swaps
+   only when Perry is ready; never unplug an active Mac-backed root without prep.
+3. **Bluetooth mouse, trackpad and keyboard — after HDMI.** Do not start Bluetooth
+   bring-up until HDMI qualification is complete. Prefer native iPad Bluetooth:
+   qualify controller/firmware/transport, pairing, pointer movement, left/right
+   click, scrolling and supported gestures; test keyboard text, modifiers, layout
+   and repeat. Check peripheral reconnect and combined HDMI/Wi-Fi use. If native
+   BT needs a wired fallback, use an Apple Lightning-to-USB Camera Adapter
+   (powered USB3 version and powered hub if needed) with USB-compatible inputs.
+   Record the exact adapter chain and qualify wired input separately from BT.
+4. **Four-orientation touch/resize cycle — after HDMI and Bluetooth.** Touchscreen
+   feature work remains deferred until this point. Test portrait,90°,180°,270°,
+   then portrait; verify taps, window dragging and outside-corner resize in each,
+   and restore after desktop restart. Log failed transforms before another attempt.
+   Recheck long-press right-click, minimized-window restore, scrolling and Home.
+5. **Auto-rotation — after HDMI and Bluetooth.** Qualify UART4 clock/baud/power,
+   Oscar/M7 transport, sensor subscription/report decoder and calibrated IIO
+   acceleration before enabling policy. Verify identity, SI units and signed
+   panel-axis mapping in stationary poses. Dry-run the policy; test flat/diagonal/
+   shaking rejection and stale data. Apply only after mapping is confirmed, then
+   verify touch/window alignment. Manual rotation remains the fallback.
+6. **Suspend/power experiments — after HDMI and Bluetooth.** Use a separate,
+   self-contained RAM root with NBD detached and app writes flushed. Never suspend
+   a Mac-backed root. Inspect mem_sleep and wake IRQs; qualify freezer/device stages
+   before real sleep. Test Home/Power wake, USB/serial, timekeeping, display, touch,
+   wireless/audio and measured power. Do not expose suspend until repeated resume
+   works. Existing screen-off/wake and held-Power menu are not true SoC suspend.
 
-11. **Bluetooth and directly connected input peripherals — only after HDMI is qualified.**
-    Do not start Bluetooth bring-up before step10 is complete. Prefer native
-    iPad Bluetooth for a mouse, trackpad and keyboard. Qualify the controller
-    and required firmware/transport, then pair and test each peripheral:
-    pointer movement, left/right click, scrolling and supported trackpad
-    gestures; keyboard text, modifiers, layout and key repeat. Test reconnect
-    after peripheral power-off/on and the qualified screen-off/wake path,
-    then combined use with HDMI, Wi-Fi and touch. Record unsupported features
-    separately from successful basic input.
-    If native BT needs a wired fallback during bring-up, note the exact
-    USB/Lightning adapter chain: an Apple Lightning to USB Camera Adapter
-    (powered USB3 version if needed), powered hub where required, and a
-    USB-compatible mouse/trackpad/keyboard. Test direct wired input separately
-    from native Bluetooth. Cable/adapter swaps must preserve a recovery path
-    for the Mac-backed RAM session; queue those physical swaps rather than
-    unplugging its active root connection without preparation.
+Existing app-storage and Wi-Fi checks remain prerequisites when their services are
+used, not reasons to move rotation or suspend ahead of HDMI/Bluetooth. Keep the
+installer hidden on unqualified profiles. Preserve signed package checks and the
+read-only base root; apps write only to the separate qualified Mac-backed image.
+Keep credentials, firmware, calibration and identifying traces private.
 
+## Evidence at the pause
 
-## Current results and remaining physical checks (October 31)
-
-- Steps 1–2: audio2 RAM desktop, aligned taps, dragging, long-press context menu,
-  minimized-window restore, brightness and screen-off/wake passed Perry's tests.
-  Screen-off is not SoC suspend. Multi-touch and repeated stress remain unqualified.
-- Step 3: finish the full four-orientation touch/resize cycle; restore portrait.
-- Step 4: bounded 16MiB write/fsync/readback, clean detach, offline filesystem
-  checks, remount persistence and signed Calculator reinstall passed. Perry
-  confirmed Calculator and dragging, then Firefox scrolling after restart with
-  smaller caches and reduced animation work. Installs were explicitly enabled
-  for this qualified session; ordinary startup still hides the installer.
-- Steps 5–6: audio2 boot, native Wi-Fi association/DHCP/DNS/direct HTTPS and
-  NetworkManager full connectivity passed. Perry confirmed combined touch use.
-  Long-duration stress and clean wireless-disable/recovery remain to qualify.
-- Step 7: bounded MCA1 inventory restored power. Route/NCO models and builds are
-  host results only; no speaker playback, SIO DMA or amp programming is qualified.
-- Step 8: bounded UART4 control inventory restored power (0x200 to 0x200).
-  Clock parent, baud, live M7 transport and acceleration reports remain unknown.
-- Step 9: suspend diagnostic RAM payload built, not booted. Never suspend NBD root.
-- Steps 10–11: HDMI remains pending; Bluetooth work starts only after HDMI.
-
-Follow the numbered order for remaining hands-on checks. Do not repeat completed
-DFU or firmware steps solely because an earlier paragraph described them as pending.
-Source updates do not reload the running iPad or change its RAM-boot profile.
-
-Window controls follow-up: Perry confirmed landscape taps and titlebar dragging
-after a touch restart, but could not resize by corner. The new touch-sized
-client menu's Smaller window action was physically confirmed. A compositor
-fix keeps deferred mouse presses at the original edge through initial jitter;
-its handler regression failed before the fix and passes afterward. The new
-build is running for a physical corner-drag check; not yet qualified.
-
-Perry confirmed corner dragging resizes Terminal with the edge-press fix.
-Landscape aligned taps, titlebar dragging, Smaller window menu and corner resizing
-are now physically confirmed for this build. Full four-orientation cycle remains
-pending; do not infer automatic rotation or suspend qualification.
-
-Audio/motion follow-up: stock clock lookup now verifies boot-declared NCO
-primary342857142Hz and UART4 primary24MHz. Live passive SIO inventory found
-remap-enable1 with CPU-control0; power unchanged. Firmware boot remains blocked
-by unowned inherited mapping; a DFU reboot alone does not authorize takeover.
-Two-second passive UART observation saw no bytes and restored power. Neither
-result is playback, sensor-stream or automatic-rotation qualification.
-Perry requested pausing touchscreen work; remaining rotation tests stay queued.
-
-## Historical audio connection notes (superseded by current ordered audio steps)
-
-Perry completed DFU recovery and sees Pongo's chess logo. The Mac still does not
-see its USB device after Lightning and USB-A reconnections. Next physical step:
-try the known-working USB-A data cable in another USB-A port/adapter, keeping the
-iPad in Pongo and avoiding button presses. Check USB enumeration before uploading
-anything; do not blindly repeat DFU or the exploit.
-
-The private SIO READY test failed its strict restoration check. The initial
-stuck-power diagnosis is corrected: the PMGR value is consistent with automatic
-clock gating, not proof of a stuck transition. Shared SPI/UART/MCA DMA startup
-writes still need ownership and cleanup qualification. Once connected, boot
-isolated audio2 with SIO off, inventory those resources, then continue audio.
-Speakers and volume remain unqualified; see audio/sio/HANDOFF.md. No internal
-storage restore or erase is needed. Touchscreen work remains paused.
-
-## Historical isolated audio checkpoint
-
-Host USB port change restored enumeration and the audio2 RAM shell. No further
-physical step is needed for the current offline codec work. Both CS35L19 amps
-identified as B0 with exact pin/power restoration. All 32 shared peripheral DMA
-controls were read as stable zero; this does not qualify SIO startup/cleanup.
-UART0 remains unbound after a failed rebind in this diagnostic boot. Before
-restoring normal desktop use, recover a clean RAM session and verify controls.
-The eventual listening test remains step 7, after clock/DMA qualification.
-
-
-Persistent audio-session update: SIO READY, supported shared-region setup and a
-4096-byte silent MCA1 transfer now pass live. Clock/route readback and exact
-restoration pass; amps remain reset. No physical step is requested yet. The
-session retains all shared controller leases and DMA buffers until RAM reboot;
-restore normal desktop use only through a clean RAM session after audio testing.
-The next physical audio step remains a quiet listening check after codec setup.
-
-## Current ordered audio steps (supersedes earlier listening requests)
-
-1. **Completed:** owner clearly heard the two-second500Hz ALSA speaker tone.
-   Normal drain passed at1s muted,2s audible and10s muted; prepare-close passed.
-2. **Fresh isolated RAM boot required:** early drop exposed a stop-protocol error.
-   The current session has reset amps and refuses playback; do not unload firmware,
-   clear poison, or retry the exploit while Linux remains connected. Coordinate
-   recovery/DFU only when the prepared payload and owner are ready.
-   The build-tested [fresh-start chain](audio/sio/native-transport/README.md)
-   replaces the earlier private setup/recovery modules; it remains opt-in.
-3. Qualify corrected stop handling: prepare-close, normal drain, midstream drop,
-   next-open/play, result/status counters and verified reset/clock restoration.
-   No fresh audible confirmation is needed for the old successful tone.
-4. Then low-volume left/right checks, volume/mute, physical volume-key handoff,
-   longer playback and actual app audio; restore desktop/touch/Wi-Fi coexistence
-   only after exclusive shared-controller ownership is resolved.
-5. Resume remaining main queue: motion/rotation and suspend/power tests, then
-   HDMI display qualification. **Bluetooth mouse/trackpad/keyboard follows HDMI**;
-   prefer native Bluetooth and document adapters if needed.
-
-Source candidate builds and host codec/protocol tests are not live qualification.
-No internal-storage changes, restore or erase are needed. Touchscreen feature work
-remains paused as requested.
+- Perry confirmed scale2 aligned taps, dragging, long-press menus, minimized-window
+  restore, brightness, screen-off/wake and the held-Power menu. Landscape taps,
+  Smaller window and corner resizing also passed. The full four-orientation cycle
+  is incomplete; auto-rotation and SoC suspend are unqualified.
+- Mac-backed storage passed bounded16MiB fsync/readback, detach, offline filesystem
+  checks, remount persistence and signed Calculator reinstall. Perry confirmed
+  Calculator, dragging and Firefox scrolling after cache/animation adjustments.
+  Ordinary startup hides installs; this does not qualify every candidate profile.
+- Native Wi-Fi association, DHCP, DNS and direct HTTPS passed on audio2, including
+  owner-confirmed combined touch use. Long-duration/disable-recovery remains open.
+- **Native speaker output is physically confirmed:** Perry clearly heard the
+  two-second500Hz ALSA tone. Normal muted drains at1s and10s passed on the earlier
+  private v2 driver. A drop test later failed stop handling and poisoned that boot.
+- The subsequent fresh audio2 boot passed SIO resource preflight, firmware READY,
+  all eight consolidated A7 setup ACKs, I2C2 enable and native PCM registration.
+  Prepare-close passed. A muted stream failed at4096frames despite driver result0
+  and matching1start/1stop. The next muted attempt stalled; serial and network
+  commands stopped returning while ICMP remained responsive. Cause is unproven.
+  Do not call this stable playback or a qualified stop fix.
+- Shutdown was requested at the pause, but the unresponsive device command channels
+  prevent verified clean iPad power-off. No firmware reload or storage change was
+  attempted. Host services are being stopped; inspect actual device state on return.
+- Oscar receive observation previously saw no bytes and restored power. Sensor
+  streaming remains unqualified. The suspend diagnostic payload is build-only.
+  HDMI and Bluetooth are unqualified and retain the priority above.
