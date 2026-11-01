@@ -106,3 +106,8 @@ against audio2 with warnings as errors. Nothing was loaded on the live iPad.
 Clock parent, switch routing, SIO transport and amplifier qualification remain
 required before audible playback. The current RAM payload embeds the older
 inactive frontend; this rebuilt sidecar is not a newly booted kernel.
+
+The [Switch3 offline backend](../switch/README.md) now independently matches
+eight exact aud1/pin1 edge cases plus defaults and synthetic write span against
+the stock driver. Full graph routing, the ADT route argument's semantics,
+clock ownership and restore paths remain unresolved. No live switch writes.
