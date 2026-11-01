@@ -64,3 +64,10 @@ Toggling visibility restores focus to the field. The RAM-home patch helper
 checks the known upstream layout, applies idempotently, and leaves desktop
 startup available if that layout changes. No credential contents are read
 or captured to validate this control. Physical input confirmation is pending.
+
+Perry requested scaling the whole Wi-Fi menu to match the Show/Hide control.
+The panel now fits a600logical-pixel preferred width to the screen, with
+a360pixel scrollable network list,60pixel minimum rows, larger text, and
+48pixel input/action controls. This is scoped to the Wi-Fi panel; it does
+not change global display scale. The live shell was refreshed and the panel
+opened without QML errors. Finger usability remains to be confirmed.
