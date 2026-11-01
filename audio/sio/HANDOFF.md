@@ -26,8 +26,8 @@ unchanged control fields. It is not proof of a firmware PMGR write or damage.
 This correction does not retroactively qualify cleanup: individual mailbox,
 remap, timer and peripheral restoration was not captured sufficiently to establish
 it. CPU-stop readback alone is insufficient. The private boot probe stays blocked.
-Internal storage was not accessed. Recovery has reached Pongo on-screen, but its
-USB device has not enumerated; no new Linux boot has been uploaded.
+Internal storage was not accessed. Changing the host USB port restored Pongo enumeration. A fresh isolated audio2
+RAM boot now has a working USB shell; no NBD disks or desktop clients are active.
 
 ## Firmware startup affects shared peripherals
 
@@ -57,9 +57,14 @@ future experiments; never BusyBox insmod for an init-that-cleans-up probe.
 
 ## Next audio work
 
-1. Re-establish Pongo USB enumeration, then boot isolated audio2 with SIO off.
-2. Inventory the shared peripheral DMA controls and their Linux owners before
-   considering another firmware boot. Do not reset active SPI/UART/MCA engines.
+1. Completed: isolated audio2 RAM boot with SIO off and working USB shell.
+2. Completed: read-only inventory of all 32 DMA control words across 16 blocks.
+   All were stable at zero; each power word was unchanged at 0x200. UART0 first
+   refused the resource claim while samsung-uart owned it. After confirming it
+   was not a console and had no open users, it was unbound. Rebinding failed
+   with EINVAL; UART0 remains unbound in this isolated session, USB unaffected.
+   Zero controls do not establish ownership, quiescence or safe restore. The
+   shared startup blocks at 0x20a001000 and 0x20a100000 remain unresolved.
 3. Implement ownership and cleanup for the complete startup footprint, with
    per-component receipts and status/control-aware power checks. Never free a
    DMA-visible buffer until its producer and all relevant DMA engines quiesce.

@@ -148,3 +148,13 @@ writes still need ownership and cleanup qualification. Once connected, boot
 isolated audio2 with SIO off, inventory those resources, then continue audio.
 Speakers and volume remain unqualified; see audio/sio/HANDOFF.md. No internal
 storage restore or erase is needed. Touchscreen work remains paused.
+
+## Latest isolated audio checkpoint
+
+Host USB port change restored enumeration and the audio2 RAM shell. No further
+physical step is needed for the current offline codec work. Both CS35L19 amps
+identified as B0 with exact pin/power restoration. All 32 shared peripheral DMA
+controls were read as stable zero; this does not qualify SIO startup/cleanup.
+UART0 remains unbound after a failed rebind in this diagnostic boot. Before
+restoring normal desktop use, recover a clean RAM session and verify controls.
+The eventual listening test remains step 7, after clock/DMA qualification.
