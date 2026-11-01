@@ -42,7 +42,7 @@ def code(mu,address,size,user):
  if address==0x7c90894:ret(0x123456789);return
  if address==0x775ca84:ret(0);return
  if address==0x7762cf8:ret(0x1020304050607080);return
- if not (0x80c2bd4<=address<0x80c2bf4 or 0x80c2ebc<=address<0x80c3010):raise RuntimeError('Unmodeled call '+hex(address))
+ if not (0x80c2bd4<=address<0x80c2db0 or 0x80c2ebc<=address<0x80c3010):raise RuntimeError('Unmodeled call '+hex(address))
 def write(mu,access,address,size,value,user):writes.append((address-MMIO,size,value))
 uc.hook_add(UC_HOOK_CODE,code);uc.hook_add(UC_HOOK_MEM_WRITE,write,begin=MMIO,end=MMIO+0xffff)
 def call(fn,*values):
@@ -51,6 +51,21 @@ def call(fn,*values):
  uc.emu_start(fn,STOP,count=50000)
  assert uc.reg_read(UC_ARM64_REG_PC)==STOP
  return list(writes)
+# Execute actual A7 queue methods; callbacks emulate reads, not queue writes.
+queue_init=call(0x80c2cac,obj)
+assert queue_init==[(0x1000,4,0x1111)]
+for enable,offset in [(0,0x1000),(1,0x1004)]:
+ assert call(0x80c2cbc,obj,enable)==[(offset,4,1)]
+ assert call(0x80c2d4c,obj,enable)==[(offset,4,0x1000)]
+for initial in [0,1,0x20000,0x20001]:
+ for enable in [0,1]:
+  w32(MMIO+0x1020,initial)
+  assert call(0x80c2d68,obj,enable)==[(0x1020,4,(initial & ~1)|enable)]
+for offset,fn in [(0x1008,0x80c2c18),(0x1020,0x80c2cdc)]:
+ for value in [0,0x10000,0x20000,0x30000]:
+  w32(MMIO+offset,value)
+  assert call(fn,obj)==[]
+  assert uc.reg_read(UC_ARM64_REG_X0)==((value>>17)&1)
 remap=call(0x80c2ebc,obj,0,descriptor)
 assert remap==[(0x10,4,0),(0x14,4,0),(0x18,4,0x71000),(0x1c,4,0),(8,4,0x23456789),(12,4,1),(0x20,4,1)]
 w32(MMIO+0x28,0x55aa0001)
@@ -63,4 +78,4 @@ w64(message,0x12345678abcdef01)
 assert call(0x80c2be4,obj,message)==[(0x1010,8,0x12345678abcdef01)]
 w64(MMIO+0x1038,0x9876543212345678);call(0x80c2bd4,obj,message)
 assert struct.unpack('<Q',uc.mem_read(message,8))[0]==0x9876543212345678
-print(json.dumps({'offline_model_only':True,'synthetic_remap_writes':remap,'synthetic_time_writes':sync,'cpu_control_offset':'0x28','tx_message_offset':'0x1010','rx_message_offset':'0x1038','firmware_boot_qualified':False},indent=2))
+print(json.dumps({'offline_model_only':True,'a7_single_mailbox_model_pass':True,'synthetic_queue_reset':queue_init,'synthetic_remap_writes':remap,'synthetic_time_writes':sync,'cpu_control_offset':'0x28','tx_message_offset':'0x1010','rx_message_offset':'0x1038','firmware_boot_qualified':False},indent=2))

@@ -132,3 +132,12 @@ by unowned inherited mapping; a DFU reboot alone does not authorize takeover.
 Two-second passive UART observation saw no bytes and restored power. Neither
 result is playback, sensor-stream or automatic-rotation qualification.
 Perry requested pausing touchscreen work; remaining rotation tests stay queued.
+
+## Current audio recovery prerequisite
+
+A bounded private SIO experiment received firmware READY but did not restore its
+power domain. Stop device-side audio experiments in this session. Recover the
+isolated audio2 RAM boot via the usual Home/Power DFU and Pongo reconnect steps;
+then inspect SIO power before any further writes. No internal-storage restore or
+erase is needed. Firmware boot-time power ownership must be fixed before repeating
+the experiment. Speakers and volume remain unqualified; see audio/sio/HANDOFF.md.

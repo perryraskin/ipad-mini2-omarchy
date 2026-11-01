@@ -28,11 +28,12 @@ static int __init j86_sio_inventory_init(void)
  void __iomem *pmgr = NULL, *sio = NULL;
  bool attached = false, enabled = false, active = false;
  bool observed = false, cleanup_ok = true;
- u32 before = 0, after;
+ u32 before = 0, after, first[10], second[10];
  int rc, i;
- /* A7 IOP-v1 remap-enable and CPU control only. No mailbox, FIFO,
-  * interrupt/error status, DMA address or timestamp reads. */
- const u32 offsets[] = { 0x20, 0x28 };
+ /* Passive mapping/control snapshot. Status reads are the same non-consuming
+  * reads used by stock A7 empty checks. Never read the RX message FIFO. */
+ const u32 offsets[] = { 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
+                         0x20, 0x28, 0x1008, 0x1020 };
 
  if (!of_machine_is_compatible("apple,j86") || PAGE_SIZE != 4096 ||
      strcmp(utsname()->release, UTS_RELEASE)) {
@@ -66,7 +67,13 @@ read_controls:
  sio = ioremap(SIO_BASE, SIO_SIZE);
  if (!sio) { rc = -ENOMEM; goto out; }
  for (i = 0; i < ARRAY_SIZE(offsets); ++i)
-  pr_info(TAG "reg[0x%02x]=0x%08x\n", offsets[i], readl(sio + offsets[i]));
+  first[i] = readl(sio + offsets[i]);
+ for (i = 0; i < ARRAY_SIZE(offsets); ++i) {
+  second[i] = readl(sio + offsets[i]);
+  pr_info(TAG "reg[0x%04x]=0x%08x stable=%d\n",
+          offsets[i], first[i], first[i] == second[i]);
+  if (first[i] != second[i]) cleanup_ok = false;
+ }
  observed = true; rc = 0;
 out:
  if (sio) iounmap(sio);

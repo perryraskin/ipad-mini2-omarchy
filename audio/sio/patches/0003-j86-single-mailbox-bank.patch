@@ -1,0 +1,29 @@
+From: Perry Raskin <perryraskin@gmail.com>
+Subject: [PATCH] soc: apple: sio: initialize only the A7 mailbox bank
+
+A7 stock reset/TX/RX methods share 0x1000/0x1004. Do not write
+the newer second bank at 0xc00/0xc04 on A7. Keep other SoCs unchanged.
+Validated with stock-code emulation; hardware boot remains disabled.
+
+--- a/drivers/soc/apple/apple-sio-core.c
++++ b/drivers/soc/apple/apple-sio-core.c
+@@ -917,12 +917,16 @@
+ 	writel(upper_32_bits(dma), sio->base + apple_sio_reg(sio, APPLE_SIO_REMAP_AP_HI));
+ 	writel(1, sio->base + apple_sio_reg(sio, APPLE_SIO_REMAP_ENABLE));
+ 
++	/* A7 uses one bank for TX/RX, as modeled from its stock IOP methods. */
+ 	writel(0x1111, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_INIT_A));
+-	writel(0x1111, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_INIT_B));
++	if (!sio->legacy_a7)
++		writel(0x1111, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_INIT_B));
+ 	writel(1, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_START_A));
+-	writel(1, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_START_B));
++	if (!sio->legacy_a7)
++		writel(1, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_START_B));
+ 	writel(0x1000, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_START_A));
+-	writel(0x1000, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_START_B));
++	if (!sio->legacy_a7)
++		writel(0x1000, sio->base + apple_sio_reg(sio, APPLE_SIO_QUEUE_START_B));
+ 	status = readl(sio->base + apple_sio_reg(sio, APPLE_SIO_RX_STATUS));
+ 	writel(status | APPLE_SIO_MBOX_ENABLE,
+ 	       sio->base + apple_sio_reg(sio, APPLE_SIO_RX_STATUS));

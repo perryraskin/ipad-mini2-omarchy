@@ -13,6 +13,6 @@ with tempfile.TemporaryDirectory(prefix='j86-upstream-sio-') as temporary:
   if hashlib.sha256(data).hexdigest()!=entry['sha256']:raise SystemExit('Upstream source checksum mismatch')
   path=pathlib.Path(temporary)/pathlib.Path(entry['path']).name;path.write_bytes(data);patches.append(path)
  args.output.mkdir(parents=True)
- for patch in [*patches,ROOT/'audio/sio/patches/0001-j86-iop-v1-experimental.patch',ROOT/'audio/sio/patches/0002-j86-preserve-inherited-remap.patch']:
+ for patch in [*patches,ROOT/'audio/sio/patches/0001-j86-iop-v1-experimental.patch',ROOT/'audio/sio/patches/0002-j86-preserve-inherited-remap.patch',ROOT/'audio/sio/patches/0003-j86-single-mailbox-bank.patch']:
   subprocess.run(['git','-C',str(args.output),'apply','--include=drivers/soc/apple/apple-sio-core.c','--include=drivers/dma/apple-sio-dma.c','--include=include/linux/soc/apple/sio.h',str(patch.resolve())],check=True)
 print('Assembled pinned public SIO sources with experimental J86 patch. Nothing built, staged or booted.')
