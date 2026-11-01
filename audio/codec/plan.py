@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only OR MIT
 """Offline J86 CS35L19 write plans. No I2C executor or power-on sequence.
 
 Models only four stock subroutines with board mode=0, no alternate calibration,

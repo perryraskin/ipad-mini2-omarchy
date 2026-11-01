@@ -75,3 +75,20 @@ No ALSA playback card, speaker output, or volume-key audio mode is qualified.
 The inherited-remap guard in patch 0002 remains in place. Patch 0004 blocks A7
 probe before power/MMIO access even with the experimental parameter enabled,
 until shared-peripheral handoff exists. Other SoCs are unchanged.
+
+## Shared-block research boundary
+
+The startup model now emits the eight writes outside SIO and peripheral DMA
+controls, including their instruction PCs, addresses, sizes and values. The
+owner ADT does not advertise a `reg` range covering either shared block (using
+arm-io physical base 0x200000000). Their restore semantics remain unknown;
+reading a word and writing it back is not a validated cleanup operation for a
+potential write-one-to-clear, command or interrupt register. No live access to
+these unresolved blocks was added.
+
+UART0's serial0 alias selects the same static driver port on reprobe. In the
+current samsung_tty source, removal leaves port.mapbase nonzero, the default
+initializer does not clear it, and init_port rejects a nonzero mapbase with
+EINVAL. This is a source-supported explanation for the observed failed rebind,
+not a reason to patch kernel memory in the live diagnostic session. A future
+handoff must account for UART lifecycle, not merely release its MMIO claim.

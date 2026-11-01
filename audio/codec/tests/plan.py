@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only OR MIT
 import importlib.util,pathlib,unittest
 p=pathlib.Path(__file__).resolve().parents[1]/'plan.py'
 s=importlib.util.spec_from_file_location('plan',p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m)

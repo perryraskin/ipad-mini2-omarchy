@@ -57,7 +57,10 @@ def model(blob):
  pmgr=[x for x in writes if 0x20e000000<=x[1]<0x20f000000]
  assert not pmgr
  assert len(writes)==121
- return dict(offline_model_only=True,ready_observed_in_model=True,
+ shared=[dict(pc=hex(pc),address=hex(a),size=size,value=hex(value))
+         for pc,a,size,value in writes if a not in controls and not 0x20ae00000<=a<0x20ae02000]
+ assert {int(x['address'],16) for x in shared}=={0x20a001000,0x20a001004,0x20a001080,0x20a001084,0x20a001040,0x20a001044,0x20a100004,0x20a100800}
+ return dict(shared_block_writes=shared,offline_model_only=True,ready_observed_in_model=True,
   modeled_mmio='zero-filled; no hardware side effects',synthetic_timer_reads=len(timer_reads),
   startup_mmio_writes=len(writes),peripheral_dma_controls_reset=len(controls),
   peripheral_bases=[hex(x) for x in bases],pmgr_writes_before_ready=len(pmgr),
