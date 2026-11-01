@@ -1,7 +1,7 @@
 # Ordered physical validation checklist
 
 This is the single physical test queue for Perry's return. No action is needed
-while he is offline. The Mac has a prepared, inactive audio2 RAM candidate;
+until a listed physical check is requested. The audio2 RAM candidate is currently running;
 source-only release updates are documented in updates/README.md. Do not restore, repartition, flash or install to iPad internal
 storage. New Wi-Fi/audio/motion/suspend code is inactive by default. Candidate
 builds are experiments, not a daily-use release. Stop a stage on unexpected
@@ -14,7 +14,7 @@ Completed October31: known-good RAM desktop recovered; scale2 taps physically co
    running kernel and current screen before changing anything. The last180/270°
    rotation test lost USB before acknowledgment; its cleanup is unknown. Restore
    portrait with `j86-rotate portrait` once reachable. If reboot is necessary,
-   use DFU and the known-good RAM boot. Verify Mac Local Network permission and
+   use DFU and the known-good RAM boot. This recovery step has been completed for the current audio2 session. Verify Mac Local Network permission and
    a real connection before repeating boot attempts.
 2. **Confirm touch and session controls.** At scale2, tap Terminal and all four
    corners. Check short tap, scrolling, dragging and second finger. Hold still
@@ -33,7 +33,7 @@ Completed October31: known-good RAM desktop recovered; scale2 taps physically co
    Check app persistence across a clean detach/remount. Confirm installs stay hidden after ordinary startup; explicitly enable only after write-path qualification. Test a closed installer terminal, verify transaction completion, and ensure failed/uncertain transactions hide installs and refuse restart until reviewed. Never bypass signature
    checks or write through the read-only root path.
 5. **RAM-boot the inactive candidate.** Prefer the latest prepared audio-candidate (7.0.12-j86-audio2) after verifying profile/module hashes and
-   matching vermagic first. It adds disabled driver drafts and the explicit Wi-Fi firmware gate; it is not boot-qualified. The older Wi-Fi candidate remains available. Keep Wi-Fi host enable off initially. Recheck touch,
+   matching vermagic first. It adds disabled driver drafts and the explicit Wi-Fi firmware gate; its RAM boot and initial touch are now physically confirmed. The older Wi-Fi candidate remains available. Keep Wi-Fi host enable off initially. Recheck touch,
    backlight and USB before wireless experiments. The installer must remain hidden because app storage has not been qualified on audio2. If any regress, return to the
    known-good RAM profile; no internal restore.
 6. **Qualify native Wi-Fi in stages.** With RF disabled, verify corrected HSIC
@@ -57,7 +57,7 @@ Completed October31: known-good RAM desktop recovered; scale2 taps physically co
    check flat/diagonal/shaking rejection and stale-stream behavior. Explicitly apply
    only after mapping is confirmed; check touch and window alignment in every pose.
    Manual Rotate screen remains the fallback.
-9. **Suspend: isolated recovery experiment only.** Requires a prepared self-contained
+9. **Suspend: isolated recovery experiment only.** The separate suspend1 RAM diagnostic payload is now built with matching USB modules, but unbooted and without a controller profile. Requires a self-contained
    RAM root with all NBD mounts detached and app writes flushed. Do not suspend the
    current Mac-backed root. Inspect candidate state/mem_sleep and wake IRQ handling;
    test freezer/device stages before a real sleep attempt. Qualify Home/Power wake,
@@ -66,8 +66,7 @@ Completed October31: known-good RAM desktop recovered; scale2 taps physically co
    needs platform resume support beyond the experimental kernel config.
 10. **Qualify HDMI external display.** With touch stable, start a bounded adapter observation, swap Mac
     Lightning for the Apple HDMI adapter and ready monitor, then reconnect the Mac
-    cable without button presses. Record monitor output/detection. The LG5K is a
-    suitable HDMI sink; the adapter determines output resolution. Video output is
+    cable without button presses. Record monitor output/detection. Verify the exact LG 5K model and its accepted inputs before testing; some LG 5K displays do not accept HDMI. Use a compatible HDMI monitor/TV if needed. Video output is
     unimplemented/unverified and must not be promised from detection alone.
 
 
@@ -152,3 +151,21 @@ panel; association and native internet validation remain pending.
 October 31 follow-up: Perry reports touch working well after native Wi-Fi and
 DNS qualification. This is a combined-session observation, not a long-duration
 stress-test result. Native HTTPS returned 200 and NM connectivity full.
+
+October 31 current-session app follow-up: 4KiB requests, queue depth2, reduced
+dirty limits and an independent OpenSSH forward passed 16MiB fsync/readback,
+clean detach, all five offline e2fsck passes and matching hash after remount.
+Native-wlan0 HTTPS and signed Calculator reinstall returned success. Earlier
+larger-request failures remain preserved privately; installer is still hidden.
+Perry reports Calculator interactions and window dragging mostly work; Firefox
+scrolling lags. Measurements show low available RAM and almost-full compressed
+swap; this is not a claim of daily-use performance.
+
+Latest current-session storage status supersedes the earlier hidden-installer
+notes: after the signed package operation, clean detach and offline e2fsck passed
+again. A matching private source/kernel qualification receipt and fresh health
+check explicitly enabled installs. Default startup still hides installs. The
+live memory guard rejected a request before starting a transaction under Firefox
+pressure; the UI tells Perry to close apps and retry. New Firefox cache/frame
+settings are staged in RAM user.js and await a browser restart/physical scroll
+comparison. No sandbox or site-isolation setting was weakened.

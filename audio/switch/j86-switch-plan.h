@@ -30,4 +30,16 @@ static inline int j86_switch_edge(unsigned int reverse, unsigned int mode,
  }
  return 0;
 }
+/* Fresh isolated graph only: exact stock TX mask2 with slave1/master2,
+ * following the public J86 aud1/pin1 route descriptor. Not an MMIO recipe;
+ * importing existing routes, clock ownership and hardware restore are absent. */
+static inline int j86_switch_tx_plan(unsigned int master, u32 *words)
+{
+ if (!words || master>1) return -EINVAL;
+ j86_switch_defaults(words);
+ words[1]=master ? 0x180101 : 0x180118;
+ if (!master) words[6]=0x181809;
+ words[16]=master ? 0x11 : 0x10;
+ return 0;
+}
 #endif

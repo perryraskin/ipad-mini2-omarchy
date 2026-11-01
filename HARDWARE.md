@@ -24,11 +24,14 @@ The reviewed stock wake/reset sequence enumerates0a5c:bd1c, interfaceff/02/ff,
 4endpoints. Read-only DL_GETVER identifies0x4324/revision6, RAM 589824 bytes.
 Boot-ROM boardtype/rev are 0 and cannot choose an NVRAM vendor variant.
 
-The running kernel lacks wireless support. An inactive candidate adds cfg80211,
-brcmfmacUSB and matching touch/HSIC modules. The experimental USB-ID/firmware
-mapping is compiled but unbooted. RAM firmware/NVRAM transport is qualified by the bounded probes below.
-Per-device RF calibration, scan and association still require qualification. Stock firmware is seyval
-from 4324b5; do not substitute Mini1's BCM4334 firmware.
+The running 7.0.12-j86-audio2 RAM kernel has accepted the exact private J86
+BCM4324rev6 firmware, scanned, associated and obtained DHCP. Direct wlan0 HTTPS
+returned200 with proxies bypassed, and NetworkManager connectivity is full after
+RAM DHCP DNS setup. Perry reports touch working well in the combined session.
+Long-duration coexistence, channel coverage and suspend/reconnect remain unqualified.
+The optional CLM/txcap firmware is absent; never invent regulatory or board data.
+Firmware and calibration stay private; automatic driver/firmware activation stays off.
+Stock firmware is seyval from4324b5, not Mini1 BCM4334.
 
 ## Audio
 
@@ -47,8 +50,9 @@ power/clock programming or audible playback is qualified.
 Oscar/M7 supplies motion data over UART4; no accelerometer IIO device is exposed.
 Automatic rotation needs that transport and coordinated display/input transforms.
 The running kernel lacks CONFIG_SUSPEND and a qualified A7 platform suspend
-path. Screen blanking does not provide SoC sleep. Physical power/touch/HDMI tests
-remain queued; no internal installation is attempted by this work.
+path. Screen blanking does not provide SoC sleep. Short Power screen-off/wake,
+held Power menu, touch dragging and window resizing were physically confirmed.
+True suspend, remaining rotation poses and HDMI stay queued; no internal installation is attempted by this work.
 
 The offline `audio/derive-amplifier.py` model also traces the exact stock
 CS35L19 revision/boost/power/status routines using private owner speaker records.
@@ -65,8 +69,9 @@ seyval-u-kk variant. A private TRX with that NVRAM and the live Wi-Fi MAC boots,
 reports expected board ID `0x67e` / revision `0x1303` and passes an owner-MAC comparison without
 logging the address. Each probe removes its temporary host and restores power.
 
-Per-device RF calibration overrides, scan and association are still unqualified.
-The private preparation receipt explicitly says `rf_qualified=false`. No interface
+These isolated firmware probes do not establish RF operation. Their early
+private preparation receipt says `rf_qualified=false`; later native-driver
+scan/association/HTTPS results are recorded above. No interface
 up, scan or TX command is used by these probes. All firmware, NVRAM, OTP and
 calibration artifacts stay private. The optional OTP snapshot module exposes
 its temporary RAM cache only to root and provides a clear control; it does not
@@ -78,7 +83,7 @@ The exact-board Wi-Fi host module starts disabled. Its root-only `enabled`
 parameter adds/removes the reviewed EHCI1 overlay, holds a module reference
 while active, and checks power restoration on stop. Baseline enable/disable
 qualified enumeration of `0a5c:bd1c` and unchanged touch state. Matching candidate
-modules compile; the candidate remains unbooted and firmware autostart is off.
+modules compile; audio2 RAM boot is confirmed and firmware autostart stays off.
 
 Manual `j86-rotate` coordinates the output transform and the native touchscreen
 calibration matrix. A 90-degree synthetic native-name touch reached the expected
@@ -166,3 +171,19 @@ host-only merge against the pinned public J86 DT. The new device stays disabled,
 and the base blob is unchanged. This does not qualify live overlay application,
 power ownership, IRQ behavior, firmware boot or audio. A9 MCA-v4 and Mini1
 speaker defaults are not used as J86 MCA/amp configuration.
+
+## Latest storage and audio preparation
+
+The bounded audio2 app profile now passes 16MiB fsync/readback, clean detach,
+offline filesystem check, remount hash verification and a signed Calculator
+reinstall. It uses 4KiB requests, queue2 and reduced dirty limits; prior larger
+request failures are not treated as successful qualification. Installer startup
+stays off by default and explicit enablement requires matching source/kernel
+qualification plus fresh storage health. Low available RAM rejects installs
+before any package transaction. Browser scrolling is physically reported laggy.
+
+Exact stock Switch3 full isolated TX graphs now match both pure C plans, and
+the fixed-format NCO plan matches six synthetic parent rates. These remain
+offline models with fake OS/clock callbacks, not real-rate or playback results.
+The inactive suspend1 RAM diagnostic payload is built with matching USB modules;
+no boot, physical wake or SoC suspend has been qualified.

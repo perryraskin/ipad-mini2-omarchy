@@ -18,4 +18,13 @@ with tempfile.TemporaryDirectory() as tmp:
  assert [v[0] for v in lines]==['first','second']
  assert float(lines[1][1])-float(lines[0][1])>=.5
  assert m.launch([sys.executable,'-c','raise SystemExit(7)'],p/'lock',settle=.8)==7
+with tempfile.TemporaryDirectory() as tmp:
+ p=pathlib.Path(tmp);profile=p/'user.js';original=(root/'firefox-user.js').read_text();profile.write_text(original)
+ m.configure_network(p,True);assert 'user_pref("network.proxy.type", 0);' in profile.read_text()
+ assert 'network.proxy.socks_remote_dns' in profile.read_text()
+ m.configure_network(p,False);assert profile.read_text()==original
+ profile.write_text('unexpected format')
+ try:m.configure_network(p,True)
+ except RuntimeError:pass
+ else:raise AssertionError('Unknown profile format accepted')
 print('Browser startup: concurrent launches queued, arguments retained, exit status preserved')

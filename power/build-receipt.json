@@ -8,7 +8,7 @@
   "result": "passed",
   "boot_tested": false,
   "activation": false,
-  "boot_payload_generated": false,
+  "boot_payload_generated": true,
   "suspend_resume_qualified": false,
   "image_sha256": "e377e58be30922445243269ddbfbe8dbd711f46926b20f99ee869fde2f057442",
   "config_sha256": "93da2e14a065fdd59960e98cf9cd5532d5eddd70fb8e0518f47ccc06d965f2ee",
@@ -28,6 +28,12 @@
   "limits": [
     "No platform deep-resume implementation",
     "No NBD-root suspend experiments",
-    "No device I/O performed"
-  ]
+    "No device I/O performed",
+    "No controller profile; diagnostic payload has not been booted",
+    "All hardware experiment gates remain disabled; inherited audio2 modules replaced"
+  ],
+  "ram_candidate_image_sha256": "3ccb00a46f67554d21983af0e65ab6cffbae2b594c2973bd79472225fa413cff",
+  "ram_candidate_payload_sha256": "2217dae53e38e6ebb57433f1da50c2ca182a4695280dd19beae8a776a9d4e949",
+  "ram_candidate_config_sha256": "af638e6728d6a8e2f08eacddc9998539082212148f6c94eb2d1da944f1ad736b",
+  "matching_initramfs_modules": "suspend1 release; usb_f_ncm, usb_f_fs, nbd vermagic checked"
 }

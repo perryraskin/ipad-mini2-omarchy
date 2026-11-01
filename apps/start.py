@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
 """Start the separately stored J86 app overlay for the verified RAM session."""
-import argparse,base64,hashlib,io,pathlib,re,shlex,socket,subprocess,sys,tarfile,time
+import argparse,base64,hashlib,io,json,pathlib,re,shlex,socket,subprocess,sys,tarfile,time
 ROOT=pathlib.Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from sessionlib import config,network,network_checked
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--enable-installer',action='store_true',help='Explicit opt-in after write-path qualification');args=parser.parse_args()
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--enable-installer',action='store_true',help='Explicit opt-in after write-path qualification');parser.add_argument('--experimental-audio2-storage',action='store_true',help='Explicit diagnostic only: audio2 bulk writes are not qualified');args=parser.parse_args()
 c=config()
 # Clear stale exposure before startup; launching apps does not require an installer.
 network_checked('rm -f /mnt/omarchy/run/j86-apps-installer-enabled')
-if network('uname -r').strip()!='7.0.12-gdfa4d4208131-dirty':raise SystemExit('Build the matching OverlayFS module before enabling apps on this kernel.')
+kernel=network('uname -r').strip()
+profiles={
+ '7.0.12-gdfa4d4208131-dirty':('j86_overlay.ko','c6a0b7f217493f252fc070da11e754acfe195f9aa056418ea9111d2a39fe3642'),
+ '7.0.12-j86-audio2':('j86_overlay_audio2.ko','ae9fb578a5ad1bc7f3e4c788f72a88f6085753454e57fee3674e53ddc472b870'),
+}
+if kernel=='7.0.12-j86-audio2' and not args.experimental_audio2_storage:raise SystemExit('Audio2 storage requires its explicit experimental opt-in; installer enablement also requires a matching qualification receipt.')
+if kernel not in profiles:raise SystemExit('No matched OverlayFS profile for this kernel.')
+if args.enable_installer:
+ receipt=ROOT/'private-data/apps-qualified.json'
+ if receipt.is_symlink() or not receipt.is_file():raise SystemExit('No reviewed write qualification; installer stays hidden.')
+ qualification=json.loads(receipt.read_text())
+ required={'apps/mount-layer.sh','apps/start.py','apps/session-daemon.py','apps/configure-proxy.py','serve-apps-disk.py'}
+ hashes=qualification.get('source_sha256',{})
+ if qualification.get('kernel')!=kernel or set(hashes)!=required or any(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=sha for name,sha in hashes.items()):raise SystemExit('Write qualification does not match this kernel/source; installer stays hidden.')
 image=ROOT/'private-data/apps-overlay.ext4'
 if not image.is_file() or image.is_symlink():raise SystemExit('Dedicated apps disk is missing')
 def enable_installer():
@@ -33,8 +46,21 @@ print('INSTALLER_HEALTH_QUALIFIED')
  if 'INSTALLER_HEALTH_QUALIFIED' not in response:raise SystemExit('No fresh storage health response; installer stays disabled')
 def backend_ready():
  try:
-  with socket.create_connection(('127.0.0.1',10814),timeout=2) as sock:return sock.recv(8)==b'NBDMAGIC'
+  with socket.create_connection(('127.0.0.1',10824),timeout=2) as sock:return sock.recv(8)==b'NBDMAGIC'
  except OSError:return False
+# A dedicated OpenSSH forward replaces Lima's automatic TCP forwarding.
+# It is local-only; no listening endpoint is exposed to the LAN.
+tunnel_spec='127.0.0.1:10824:127.0.0.1:10814'
+port=subprocess.run(['lsof','-nP','-iTCP@127.0.0.1:10824','-sTCP:LISTEN','-Fp'],capture_output=True,text=True)
+tunnel_pids=re.findall(r'^p(\d+)$',port.stdout,re.M)
+if tunnel_pids:
+ assert len(tunnel_pids)==1
+ command=subprocess.check_output(['ps','-p',tunnel_pids[0],'-o','command='],text=True).strip()
+ assert command.startswith('/usr/bin/ssh ') and tunnel_spec in shlex.split(command) and command.endswith(' lima-j86-build'),'Unexpected tunnel listener'
+else:
+ subprocess.run(['limactl','start','j86-build'],check=True)
+ with (ROOT/'private-data/apps-tunnel.log').open('ab') as log:
+  subprocess.Popen(['/usr/bin/ssh','-F',str(pathlib.Path.home()/'.lima/j86-build/ssh.config'),'-S','none','-o','ControlMaster=no','-o','ExitOnForwardFailure=yes','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3','-N','-T','-L',tunnel_spec,'lima-j86-build'],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
 if not backend_ready():
  subprocess.run(['limactl','start','j86-build'],check=True)
  with (ROOT/'private-data/apps-backend.log').open('ab') as log:
@@ -55,11 +81,14 @@ else:
  with (ROOT/'private-data/apps-server.log').open('ab') as log:
   subprocess.Popen([sys.executable,str(ROOT/'serve-apps-disk.py'),c['host_ip'],c['device_ip']],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
 if not network('test -d /sys/module/overlay && echo LOADED').strip():
- module=ROOT/'apps/kernel/j86_overlay.ko'
- assert hashlib.sha256(module.read_bytes()).hexdigest()=='c6a0b7f217493f252fc070da11e754acfe195f9aa056418ea9111d2a39fe3642'
+ name,sha=profiles[kernel]
+ module=ROOT/'apps/kernel'/name
+ assert hashlib.sha256(module.read_bytes()).hexdigest()==sha
  subprocess.run([sys.executable,str(ROOT/'touch/tools/push-probe.py'),str(module)],check=True)
 mounted=network("grep ' /mnt/j86-apps overlay rw,' /proc/mounts")
 if not mounted.strip():
+ tuning=base64.b64encode((ROOT/'apps/usb-transfer-tuning.py').read_bytes()).decode()
+ print(network_checked("busybox base64 -d <<'J86_USB_TUNING' > /mnt/omarchy/run/j86-usb-transfer-tuning.py\n"+tuning+"\nJ86_USB_TUNING\nbusybox chroot /mnt/omarchy /usr/bin/python /run/j86-usb-transfer-tuning.py"),end='')
  encoded=base64.b64encode((ROOT/'apps/mount-layer.sh').read_bytes()).decode()
  result=network_checked("set -e\nbusybox base64 -d <<'J86_MOUNT_APPS' > /tmp/j86-apps-mount.sh\n"+encoded+"\nJ86_MOUNT_APPS\nsh /tmp/j86-apps-mount.sh "+c['host_ip'],timeout=30)
  if 'APPS_LAYER_READY' not in result:raise SystemExit(result)

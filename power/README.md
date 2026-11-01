@@ -44,7 +44,7 @@ All physical steps live in [HANDS-ON-QUEUE.md](../HANDS-ON-QUEUE.md).
 
 ## Host build result
 
-The separate ARM64 Image and all configured modules built successfully as `7.0.12-j86-suspend1`. [build-receipt.json](build-receipt.json) records artifact/config hashes and the unchanged DT wake audit. No RAM payload was generated and no device boot or suspend test occurred.
+The separate ARM64 Image and all configured modules built successfully as `7.0.12-j86-suspend1`. [build-receipt.json](build-receipt.json) records artifact/config hashes and the unchanged DT wake audit. That initial build generated no RAM payload and performed no device boot or suspend test; the later inactive payload is described below.
 
 The new Oscar attach draft rejects system suspend while attached because UART/M7 wake is unqualified. The MCA bench draft rejects system suspend while its clock/power lease is active. Neither adds stream resume support or a new suspend menu entry. These compile-time guards do not establish deep A7 resume.
 
@@ -55,3 +55,18 @@ now gates exact-device Labwc sendEventsMode while retaining touch scanning.
 The configuration helper preserves touch calibration and other devices in
 tests. Perry physically confirmed dragging still works immediately after off/wake with this change; this is
 not platform suspend or reduced touch-controller power.
+
+## Inactive RAM diagnostic payload
+
+`package-ram-candidate.sh` now packages a separate suspend1 initramfs and RAM
+payload, preserving the verified loader, DT and boot arguments. It replaces
+the inherited audio2 module directory and verifies suspend1 vermagic for USB
+NCM, FunctionFS and NBD; shipping the old release's modules would break USB
+recovery. All experimental module gates remain off. It adds no firmware, host
+root mount, suspend service or controller profile. The live desktop is unchanged.
+
+This is a built, unbooted diagnostic artifact, not working deep suspend. The
+next step needs physical DFU/recovery availability: boot only the standalone
+RAM shell, confirm USB and button IRQs, and confirm zero NBD mounts/connections.
+Do not use the normal desktop start flow for a suspend test. Begin with PM
+freezer/device checkpoints, then qualify wake/resume in the ordered queue.

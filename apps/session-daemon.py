@@ -6,6 +6,7 @@ SOCKET=pathlib.Path('/run/j86-apps.sock')
 READY=pathlib.Path('/run/j86-apps-ready')
 INSTALLER=pathlib.Path('/run/j86-apps-installer-enabled')
 TRANSACTION=pathlib.Path('/run/j86-apps-transaction.json')
+MEMINFO=pathlib.Path('/proc/meminfo')
 assert os.geteuid()==0
 assert pathlib.Path('/proc/device-tree/model').read_bytes().rstrip(b'\0')==b'Apple iPad mini 2 (Cellular)'
 assert any(x.split()[1:3]==['/','overlay'] and 'rw' in x.split()[3].split(',') for x in pathlib.Path('/proc/mounts').read_text().splitlines())
@@ -69,6 +70,11 @@ def publish():
    os.chown(target,1000,1000)
   except (ValueError,configparser.Error):continue
 
+def install_resources():
+ values={line.split(':',1)[0]:line.split(':',1)[1].split()[0] for line in MEMINFO.read_text().splitlines() if ':' in line}
+ if int(values.get('MemAvailable','0')) < 192*1024:
+  raise ValueError('Close Firefox and other apps, then retry installing; available memory is too low')
+
 def storage_health():
  text=pathlib.Path('/etc/pacman.conf').read_text()
  if not re.search(r'^SigLevel\s*=\s*Required DatabaseOptional\s*$',text,re.M):raise ValueError('Package signatures must remain required')
@@ -110,6 +116,7 @@ with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
      elif action=='install':
       if not re.fullmatch(r'[a-z0-9][a-z0-9+_.@-]*',name):raise ValueError('Enter one repository package name')
       if not INSTALLER.is_file():raise ValueError('Installer is disabled; explicitly qualify and enable the Mac write path first')
+      install_resources()
       READY.unlink(missing_ok=True)
       fd=os.open(TRANSACTION,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
       with os.fdopen(fd,'w') as f:json.dump({'package':name,'daemon_pid':os.getpid(),'started':time.time()},f)

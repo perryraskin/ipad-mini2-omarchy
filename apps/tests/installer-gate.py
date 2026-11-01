@@ -10,7 +10,7 @@ if not hasattr(socket,'SO_PEERCRED'):
 source=pathlib.Path(__file__).resolve().parents[1]/'session-daemon.py'
 with tempfile.TemporaryDirectory() as tmp:
  root=pathlib.Path(tmp);tree=ast.parse(source.read_text());body=[]
- replacements={'HOME':root/'home','RUNTIME':root/'runtime','SOCKET':root/'apps.sock','READY':root/'ready','INSTALLER':root/'enabled','TRANSACTION':root/'transaction.json'}
+ replacements={'HOME':root/'home','RUNTIME':root/'runtime','SOCKET':root/'apps.sock','READY':root/'ready','INSTALLER':root/'enabled','TRANSACTION':root/'transaction.json','MEMINFO':root/'meminfo'}
  for node in tree.body:
   if isinstance(node,ast.Assert):continue
   if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in replacements:
@@ -32,6 +32,7 @@ with tempfile.TemporaryDirectory() as tmp:
  # Skip real keyring preparation by answering True for that specific fixture path.
  text=script.read_text().replace("ring = pathlib.Path('/etc/pacman.d/gnupg')",'ring = pathlib.Path('+repr(str(root/'ring'))+')');script.write_text(text.replace('os.chown(SOCKET, 0, 1000)','None'))
  (root/'ring').mkdir();(root/'ring/pubring.gpg').write_text('synthetic')
+ (root/'meminfo').write_text('MemAvailable: 524288 kB\n')
  log=(root/'log').open('w+')
  process=subprocess.Popen([sys.executable,str(script)],stdout=log,stderr=log)
  def request(name,action='install'):
@@ -65,6 +66,10 @@ with tempfile.TemporaryDirectory() as tmp:
   scope={'shlex':shlex,'network_checked':network_checked}
   exec(compile(ast.Module(body=[helper],type_ignores=[]),str(start_source),'exec'),scope)
   scope['enable_installer']();assert (root/'enabled').exists()
+  (root/'meminfo').write_text('MemAvailable: 65536 kB\n')
+  assert b'Close Firefox' in request('test')
+  assert not (root/'transaction.json').exists() and (root/'ready').exists()
+  (root/'meminfo').write_text('MemAvailable: 524288 kB\n')
   assert b'EXIT:0' in request('test')
   assert (root/'ready').exists() and not (root/'transaction.json').exists()
   (root/'storage-fail').touch();assert b'EXIT:1' in request('',action='health')

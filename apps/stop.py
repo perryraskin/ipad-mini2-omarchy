@@ -16,7 +16,7 @@ def stop():
   time.sleep(.25)
  else:raise RuntimeError('App-root processes remain; refusing to unmount: '+alive)
  print(network_checked('''set -e
-for n in dev/pts dev/shm dev proc sys run home tmp; do
+for n in etc/resolv.conf dev/pts dev/shm dev proc sys run home tmp; do
  if grep -q " /mnt/j86-apps/$n " /proc/mounts; then umount "/mnt/j86-apps/$n"; fi
 done
 if grep -q ' /mnt/j86-apps ' /proc/mounts; then umount /mnt/j86-apps; fi

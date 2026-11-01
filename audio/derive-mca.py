@@ -5,11 +5,11 @@ Requires Unicorn in a local Python environment and an owner-extracted 16H88
 kernelcache. Fake platform functions and cleared busy bits are modeling inputs,
 not evidence of functional playback. Never execute this trace as an MMIO script.
 """
-import argparse,hashlib,importlib.util,pathlib,struct
+import argparse,hashlib,importlib.util,pathlib,struct,subprocess,re
 from unicorn import Uc,UcError,UC_ARCH_ARM64,UC_MODE_ARM,UC_HOOK_CODE,UC_HOOK_MEM_READ,UC_HOOK_MEM_WRITE
 from unicorn.arm64_const import UC_ARM64_REG_X0,UC_ARM64_REG_X1,UC_ARM64_REG_X2,UC_ARM64_REG_X3,UC_ARM64_REG_X4,UC_ARM64_REG_X5,UC_ARM64_REG_X6,UC_ARM64_REG_X7,UC_ARM64_REG_X30,UC_ARM64_REG_SP,UC_ARM64_REG_PC
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('kernelcache',type=pathlib.Path);parser.add_argument('--lifecycle-model',action='store_true');parser.add_argument('--nco-model',action='store_true');parser.add_argument('--nco-parent-rate',type=int,default=342857142);parser.add_argument('--stuck-busy',choices=('flush',),help='Offline non-clearing configure poll; expect instruction-bound stop before TX');args=parser.parse_args()
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('kernelcache',type=pathlib.Path);parser.add_argument('--lifecycle-model',action='store_true');parser.add_argument('--nco-model',action='store_true');parser.add_argument('--nco-parent-rate',type=int,default=342857142);parser.add_argument('--stuck-busy',choices=('flush',),help='Offline non-clearing configure poll; expect instruction-bound stop before TX');parser.add_argument('--route-call-model',action='store_true',help='Capture stock MCA route callback arguments with an opaque route object');parser.add_argument('--nco-backend',type=pathlib.Path,help='Compare NCO1 writes against a compiled offline C plan');args=parser.parse_args()
 assert hashlib.sha256(args.kernelcache.read_bytes()).hexdigest()=='d173a651d02329a02d2f23c2859e1e54308a5e94da86ba729777efeb3503da08','Expected exact iPad4,5 16H88 stock kernelcache'
 spec=importlib.util.spec_from_file_location('prelink',ROOT/'research/read-prelink.py');helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
 _,segments,data=helper.prelink(args.kernelcache)
@@ -75,6 +75,7 @@ def call(fn,*arguments):
 def run(title,descriptor):
  state.clear();log.clear();obj=alloc(0x228);w64(obj,0x7575cd0);w64(obj+0x110,fake('provider'));w64(obj+0x120,MMIO);w32(obj+0x128,1)
  for offset,name in [(0x150,'irq'),(0x158,'txdma'),(0x160,'rxdma'),(0x168,'mclk')]:w64(obj+offset,fake(name))
+ if args.route_call_model:w64(obj+0x1a8,fake('route'))
  # Exact bounded live MCA1 inventory measured TX/RX FIFO depths128.
  w32(obj+0x130,128);w32(obj+0x134,128)
  d=alloc(36);uc.mem_write(d,descriptor)
@@ -107,4 +108,9 @@ if args.nco_model:
  try:print('set rate rc',hex(call(0x82c1fc8,obj,1,12288000,0,0)))
  except (RuntimeError,UcError) as error:print('INCOMPLETE NCO MODEL',error)
  for line in log:print(' ',line)
+ if args.nco_backend:
+  actual=[(int(a,16),int(b,16)) for a,b in re.findall(r'write \+([0-9a-f]+) = ([0-9a-f]+)', '\n'.join(log))]
+  expected=[tuple(int(n,16) for n in line.split()) for line in subprocess.check_output([str(args.nco_backend.resolve()),str(args.nco_parent_rate)],text=True).splitlines()]
+  assert actual==expected,(actual,expected)
+  print('PASS: fixed-format C NCO plan matches exact stock writes for this synthetic parent')
  print('Modeled reference rates are not measured clock evidence. No hardware writes.')

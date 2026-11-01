@@ -10,24 +10,27 @@ class Relay(socketserver.BaseRequestHandler):
     for sock in (upstream,self.request):sock.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
     # NBD requests and replies must drain independently: a blocking sendall
     # in a single select loop deadlocks when both TCP windows fill.
-    def pump(source,destination):
+    def pump(source,destination,label):
+     count=0;reason='eof'
      try:
       while True:
        data=source.recv(65536)
        if not data:break
-       destination.sendall(data)
-     except OSError:pass
+       destination.sendall(data);count+=len(data)
+     except OSError as error:reason=type(error).__name__+':'+str(error.errno)
      finally:
+      print('relay',label,'bytes='+str(count),reason,flush=True)
       for sock in (source,destination):
        try:sock.shutdown(socket.SHUT_RDWR)
-       except OSError:pass
-    receiver=threading.Thread(target=pump,args=(upstream,self.request),daemon=True)
+       except OSError as error:reason=type(error).__name__+':'+str(error.errno)
+    receiver=threading.Thread(target=pump,args=(upstream,self.request,'reply'),daemon=True)
     receiver.start()
-    pump(self.request,upstream)
+    pump(self.request,upstream,'request')
     receiver.join()
   except OSError as error:print(type(error).__name__,flush=True)
 class Server(socketserver.ThreadingTCPServer):
- upstream_address=('127.0.0.1',10814)
+ # Bypass Lima automatic forwarding: bulk NBD writes failed on that path.
+ upstream_address=('127.0.0.1',10824)
  allow_reuse_address=True
  daemon_threads=True
 if __name__=='__main__':

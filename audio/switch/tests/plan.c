@@ -19,6 +19,14 @@ int main(void)
     for(unsigned int i=0;i<J86_SWITCH_WORDS;i++) printf(" %08x",e.value[i]);
     puts("");
    }
+ for(unsigned int master=0;master<2;master++) {
+  assert(!j86_switch_tx_plan(master,defaults));
+  printf("tx%u",master);
+  for(unsigned int i=0;i<J86_SWITCH_WORDS;i++) printf(" %08x",defaults[i]);
+  puts("");
+ }
+ assert(j86_switch_tx_plan(2,defaults)==-EINVAL);
+ assert(j86_switch_tx_plan(0,NULL)==-EINVAL);
  assert(j86_switch_edge(2,0,0,&e)==-EINVAL);
  assert(j86_switch_edge(0,2,0,&e)==-EINVAL);
  assert(j86_switch_edge(0,0,2,&e)==-EINVAL);

@@ -89,3 +89,47 @@ allowing another Firefox invocation, retaining URL arguments for normal remote
 forwarding. The profile disables speculative processes and first-run/new-tab
 pages while retaining browser sandboxing and site isolation. Host and Linux
 concurrency tests pass; live single-browser responsiveness remains to be checked.
+
+## Audio2 diagnostic boundary (October 31)
+
+A matching OverlayFS sidecar built for audio2 and its 221 live symbol exports
+validated. It loaded and the Mac-backed app root mounted; startup health passed.
+A larger fsync/readback test then failed with NBD3 receive errors and an ext4
+journal abort. USB transfer settings were subsequently verified, but the bulk
+write failure reproduced. This is not a qualified app-storage profile.
+The app layer was detached; the failed Mac image was preserved separately.
+A working copy's journal was repaired offline and all five e2fsck passes passed
+before the second diagnostic. Neither image is a known-good qualification.
+No internal iPad storage was accessed. Installer enablement is refused on audio2
+even when explicitly requested. Diagnostic mounts require the separate
+`--experimental-audio2-storage` flag. `build-overlay.sh` only builds the sidecar.
+A raw USB TCP test passed simultaneous 16MiB each direction with matching hashes;
+this does not qualify the kernel NBD write path or Lima forwarding.
+
+## Current bounded audio2 write qualification
+
+Subsequent isolation tests passed raw USB TCP (16MiB simultaneously each way),
+a direct Mac RAM NBD server, and an independent OpenSSH tunnel to VM RAM NBD.
+The tunnel alone did not fix larger-request writes to the app filesystem.
+With 4KiB requests, queue depth2, no read-ahead, 512KiB background dirty and
+2MiB foreground dirty bounds, the real app layer passed 16MiB fsync/readback
+in 2.93s. Clean detach and all five read-only offline e2fsck passes passed;
+after remount, the file hash matched. Native-wlan0 HTTPS returned200 and a
+signature-checked Calculator reinstall completed exit0. A subsequent clean
+detach and filesystem check passed after that package operation.
+
+These are bounded qualifications, not a guarantee against all stalls. Earlier
+failed images remain preserved privately. The initializer defaults to a hidden
+installer; audio2 additionally requires `--experimental-audio2-storage`. Explicit
+installer enablement now requires a private qualification receipt matching the
+kernel and exact storage/service source hashes, plus the fresh daemon fsync
+health handshake. This session's tested profile was explicitly enabled.
+The public source release does not include a qualification receipt or disk.
+
+The daemon refuses an install before creating any transaction marker when
+MemAvailable is below192MiB. It asks the user to close Firefox/other apps and
+retry. A live low-memory rejection and the Linux daemon integration test both
+confirmed that no package transaction started. This does not weaken signatures,
+remove site isolation, or alter the read-only base root. Firefox's 1GiB-board
+scroll performance remains limited; Perry reports Calculator/window interaction
+working but browser scrolling lagging.
