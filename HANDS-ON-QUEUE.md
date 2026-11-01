@@ -124,3 +124,11 @@ opt-in PipeWire/WirePlumber profile in audio/pipewire. Both pw-play and paplay
 completed2s silence with native clean stops,14starts/14stops. Desktop key code's
 sink guard and5% volume command pass against it. Still qualify audible app
 playback, physical keys, and shared-controller desktop/touch/Wi-Fi coexistence.
+
+Autonomous audio follow-up (no reboot): both app APIs passed44.1k mono/48k stereo/
+96k stereo silence, app interruption after active phase3, mixed clients, software
+mute/volume readbacks and independent audio-service restart. session.sh provides
+opt-in RAM-only control with identity/PID guards. A newly found queued-worker
+stop race is fixed and regression-tested in source only; current live PCM remains
+a8c6a0e. Add immediate-stop timing qualification to the next planned RAM boot,
+not this no-reboot session. Audible app output and physical key checks remain.

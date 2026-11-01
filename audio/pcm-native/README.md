@@ -133,3 +133,15 @@ requires the exact gpio-keys name and BUS_HOST/vendor1/product1 identity, starts
 at-20dB, and handles only press events for volume up/down in5dB steps capped
 at0dB. It neither handles power nor writes brightness. It is build-tested and
 staged, not physically qualified; it is not the desktop PipeWire key service.
+
+## Queued-stop race fix (host-tested only)
+
+The current source now flushes the playback worker during close/free/sync-stop
+and handoff, instead of cancelling it. If STOP arrives after hardware START but
+before the worker is scheduled, cancellation could skip the worker's DMA cleanup.
+Flushing lets that already-stopped worker retire outstanding requests and restore
+hardware before the caller returns. `tests/work-stop.py` exercises the actual
+callbacks with a queued worker, passes corrected code and rejects the old code.
+The module builds with Werror. It has NOT been loaded into the healthy live boot;
+that boot still runs a8c6a0e. No reboot or module replacement was performed.
+The already-queued next-boot work includes a deliberately immediate stop test.

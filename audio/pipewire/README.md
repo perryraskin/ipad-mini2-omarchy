@@ -46,3 +46,23 @@ in the isolated test; no realtime or desktop scheduling qualification is claimed
 `enable N` where N=0..60 corresponds to-60..0dB. Enabling is explicit, and does not
 start PCM playback. Use bounded low-amplitude files and mute after testing. Its
 status path is live-tested; audible app enable/mute qualification is pending.
+
+## Reproducible opt-in service control
+
+Stage this directory in RAM (for example `/tmp/j86-pipewire`) after preparing the
+read-only host-root and RAM mounts above. `sh session.sh start` refuses by default.
+Use `sh session.sh start --allow-isolated-audio`; `status` inspects the sink and
+counters; `stop` stops only the recorded headless audio daemons. No autostart is
+installed, and hardware mute is unchanged. The script checks exact J86/kernel,
+read-only host NBD root, RAM runtime, healthy idle driver, absent touch/Wi-Fi/
+desktop, PID executable/root/start-time and boot identity before relevant actions.
+Do not use it on an ordinary desktop session. It never loads or unloads drivers.
+
+Live tests passed: default-off rejection, duplicate-start refusal, wrong-boot
+stop refusal, and two service stop/restart cycles on the same native-driver boot.
+Both pw-play and paplay passed44.1kHz mono,48kHz stereo and96kHz stereo silent
+files. A running PulseAudio client was terminated only after driver phase3 was
+observed, followed by clean native cleanup and successful subsequent playback.
+Simultaneous PipeWire/PulseAudio streams also passed. Pulse sink mute and volume
+readbacks passed at40% and100%; hardware remained muted throughout. These tests
+qualify bounded transport/mixing/control behavior, not acoustic quality or latency.

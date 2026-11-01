@@ -249,19 +249,21 @@ static int pcm_open(struct snd_pcm_substream *s)
  if(rc>=0){WRITE_ONCE(stream,s);WRITE_ONCE(opened,true);rc=0;}
 out:mutex_unlock(&owner_lock);return rc;
 }
+/* STOP can arrive before the queued worker starts. Flush it so its DMA/amp
+ * cleanup runs; cancelling a pending worker would skip that cleanup entirely. */
 static int pcm_close(struct snd_pcm_substream *s)
-{WRITE_ONCE(running,false);cancel_work_sync(&playback_work);if(prepared){int r=restore_hw();if(r){poisoned=true;WRITE_ONCE(result,r);}prepared=false;}WRITE_ONCE(stream,NULL);WRITE_ONCE(opened,false);return 0;}
+{WRITE_ONCE(running,false);flush_work(&playback_work);if(prepared){int r=restore_hw();if(r){poisoned=true;WRITE_ONCE(result,r);}prepared=false;}WRITE_ONCE(stream,NULL);WRITE_ONCE(opened,false);return 0;}
 static int pcm_params(struct snd_pcm_substream *s,struct snd_pcm_hw_params *p)
 {
  if(params_buffer_bytes(p)!=BUFFER||params_period_bytes(p)!=PERIOD)return -EINVAL;
  snd_pcm_set_runtime_buffer(s,&pcm_buf);s->runtime->dma_bytes=BUFFER;return 0;
 }
 static int pcm_free(struct snd_pcm_substream *s)
-{WRITE_ONCE(running,false);cancel_work_sync(&playback_work);if(prepared){int r=restore_hw();if(r){poisoned=true;WRITE_ONCE(result,r);}prepared=false;}snd_pcm_set_runtime_buffer(s,NULL);return 0;}
+{WRITE_ONCE(running,false);flush_work(&playback_work);if(prepared){int r=restore_hw();if(r){poisoned=true;WRITE_ONCE(result,r);}prepared=false;}snd_pcm_set_runtime_buffer(s,NULL);return 0;}
 static int pcm_prepare(struct snd_pcm_substream *s)
 {
  int rc;
- WRITE_ONCE(running,false);cancel_work_sync(&playback_work);
+ WRITE_ONCE(running,false);flush_work(&playback_work);
  if(poisoned||handed_off)return -EIO;
  if(prepared){rc=restore_hw();prepared=false;if(rc){poisoned=true;return rc;}}
  rc=setup_hw();if(rc){if(restore_hw())poisoned=true;result=rc;return rc;}
@@ -300,7 +302,7 @@ fail:
  return rc;
 }
 static int pcm_sync_stop(struct snd_pcm_substream *s)
-{cancel_work_sync(&playback_work);return 0;}
+{flush_work(&playback_work);return 0;}
 static snd_pcm_uframes_t pcm_pointer(struct snd_pcm_substream *s)
 {return READ_ONCE(hw_pos);}
 static const struct snd_pcm_ops pcm_ops={.open=pcm_open,.close=pcm_close,.ioctl=snd_pcm_lib_ioctl,
@@ -357,7 +359,7 @@ int j86_pcm_native_claim(struct j86_sio_transport *out)
  if(!out||handed_off||opened||running||poisoned){rc=-EBUSY;goto out;}
  handed_off=true;
  mutex_unlock(&owner_lock);
- snd_card_disconnect_sync(card);cancel_work_sync(&playback_work);
+ snd_card_disconnect_sync(card);flush_work(&playback_work);
  if(prepared){rc=restore_hw();prepared=false;if(rc){poisoned=true;return rc;}}
  *out=transport;return 0;
 out:mutex_unlock(&owner_lock);return rc;

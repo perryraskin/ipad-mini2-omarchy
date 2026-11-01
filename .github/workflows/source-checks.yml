@@ -44,3 +44,6 @@ jobs:
       - run: cc -std=c11 -Wall -Wextra -Werror audio/sio/native-transport/tests/plan.c -o /tmp/j86-native-setup && /tmp/j86-native-setup
       - run: python audio/pcm-native/tests/open.py
       - run: python audio/pcm-native/tests/stop.py
+      - run: python audio/pcm-native/tests/work-stop.py
+      - run: cc -Wall -Wextra -Werror audio/pcm-native/mixer-control.c -lasound -o /tmp/j86-mixer-control
+      - run: sh -n audio/pipewire/session.sh
