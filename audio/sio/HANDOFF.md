@@ -92,3 +92,36 @@ initializer does not clear it, and init_port rejects a nonzero mapbase with
 EINVAL. This is a source-supported explanation for the observed failed rebind,
 not a reason to patch kernel memory in the live diagnostic session. A future
 handoff must account for UART lifecycle, not merely release its MMIO claim.
+
+## Persistent isolated session: live progress
+
+A private experimental session owner now holds all sixteen affected peripheral
+MMIO ranges and power-domain references, four shared register ranges, four
+host interrupts requested disabled, both speaker GPIOs low, and the exact
+hash-checked firmware allocation until RAM reboot. This avoids pretending to
+restore undocumented shared registers. Firmware READY passed with USB alive.
+This is exclusive diagnostic ownership; ordinary touch/desktop clients cannot
+be started against these leased controllers.
+
+The current Orchard ten-command region initializer is not A7-compatible:
+EP0 general buffer parameters 0x0f/0x10 acknowledged, but 0x1a was rejected.
+`derive-firmware-setup.py` executes all 256 parameter values for both relevant
+firmware endpoints (512 cases). With mapping helpers explicitly mocked, EP0
+accepts 1/2, 3/4, 0x0b/0x0c and 0x0f/0x10; EP3 accepts 0x0d/0x0e. It rejects
+EP0 0x1a/0x1b. An explicit continuation preserved the accepted general buffer
+and completed the remaining six supported region commands. All shared memory
+remains allocated. No unsupported command was retried.
+
+A bounded clock/route experiment started from the exact disconnected Switch3
+defaults and NCO1 0x80308000 plus zero parameters. Programming/readback and exact
+restoration passed. NCO control bits21:20 stayed 3 on readback; this is an
+observation, not a complete interpretation of these bits or a measured clock.
+
+A subsequent actual 4096-byte silence transfer on MCA1 endpoint42 passed:
+configure ACK, submit ACK, tagged completion with 4096 bytes, and stop ACK.
+MCA TX was stopped/flushed and the clock/route registers restored. Both speaker
+amplifiers remained in reset, and USB remained responsive. This establishes a
+basic muted DMA path, not audible playback, cyclic reliability, ALSA integration,
+physical sample-rate accuracy, or coexistence with touch. Temporary live session
+and recovery modules are still private development code pending consolidation.
+The generic core's A7 activation block remains in place.

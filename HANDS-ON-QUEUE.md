@@ -158,3 +158,11 @@ controls were read as stable zero; this does not qualify SIO startup/cleanup.
 UART0 remains unbound after a failed rebind in this diagnostic boot. Before
 restoring normal desktop use, recover a clean RAM session and verify controls.
 The eventual listening test remains step 7, after clock/DMA qualification.
+
+
+Persistent audio-session update: SIO READY, supported shared-region setup and a
+4096-byte silent MCA1 transfer now pass live. Clock/route readback and exact
+restoration pass; amps remain reset. No physical step is requested yet. The
+session retains all shared controller leases and DMA buffers until RAM reboot;
+restore normal desktop use only through a clean RAM session after audio testing.
+The next physical audio step remains a quiet listening check after codec setup.

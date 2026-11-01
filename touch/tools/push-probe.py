@@ -7,9 +7,9 @@ p=pathlib.Path(sys.argv[1]).resolve()
 if not re.fullmatch(r'j86_[a-z0-9_]+\.ko',p.name):raise SystemExit('Unexpected module name')
 nm=subprocess.check_output(['xcrun','llvm-nm','-u',str(p)],text=True)
 symbols=re.findall(r' U (\S+)',nm)
-pattern='__ksymtab_('+'|'.join(re.escape(s) for s in symbols)+')$'
+pattern='__ksymtab_('+'|'.join(re.escape(s) for s in symbols)+')([[:space:]]+\[[^]]+\])?$'
 exports=network("busybox grep -E '"+pattern+"' /proc/kallsyms")
-missing=[s for s in re.findall(r' U (\S+)',nm) if not re.search(r'\b__ksymtab_'+re.escape(s)+r'$',exports,re.M)]
+missing=[s for s in re.findall(r' U (\S+)',nm) if not re.search(r'\b__ksymtab_'+re.escape(s)+r'(?:\s+\[[A-Za-z0-9_]+\])?$',exports,re.M)]
 if missing:raise SystemExit('Missing live exports: '+str(missing))
 if '--check-only' in sys.argv[2:]:
  print('Validated',len(symbols),'live exports without loading; build VM is not required.');raise SystemExit(0)
