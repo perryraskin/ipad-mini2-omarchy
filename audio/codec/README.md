@@ -30,6 +30,29 @@ configuration at 0x81f4ed4 with explicit synthetic 48kHz, two-byte-slot descript
 and no sense channels. All 32 operations match the stereo16 plan, including
 RX_AUD 0x20/0x22 rather than the Mini1 driver's 32-bit-slot 0x60/0x64. The earlier
 model labeled this skipped function a GPIO/keepalive callback; it is actually
-serial configuration. GPIO/keepalive callbacks at 0x81f582c/0x81f6478 remain
-mocked. MCA's NCO clock and the amplifier's declared 12MHz MCLK must not be
+serial configuration. The default model still stubs keepalive configuration at 0x81f582c and
+amplifier clock control at 0x81f6478; the latter is not a GPIO operation. MCA's NCO clock and the amplifier's declared 12MHz MCLK must not be
 conflated; actual codec clock/power qualification is still pending.
+
+`--power-model` now executes the full stock muted power-on/off routines,
+including those two helpers. It checks ordered register writes, status reads,
+10/8ms power-on and 1/4ms power-off waits, keepalive register configuration,
+three initial GPIO transitions and timer start/cancel callbacks. Both optional
+keepalive branches pass. External clock, GPIO, timer and elapsed-time services
+remain modeled, and the clock-function branch is a synthetic fixture, not a
+claim that J86 advertises function-mclk_control. The real J86 speaker node lacks
+that property and falls back to the audio provider's clock-control interface.
+
+The live ADT maps MCA1's second region to 0x20a002004, size4. Stock MCA maps it
+into object+0x148. With an explicitly modeled 24MHz `nclk` and the stock 12MHz
+speaker descriptor, clock-selection routine0x863cda4 produces0x58; disabling
+MCLK through0x863cf80 yields0x18. `derive-mca.py --amp-clock-model` checks this
+separate register, which earlier models omitted. MCA+0x40 is used as an
+interrupt-status/acknowledgement register; it is not this MCLK control.
+
+Live bounded qualification: the separate clock register was stably0. A
+RAM-only, default-off test with both amps reset wrote0x58, read0x58, and restored
+exactly0. This establishes register access/readback, not physical frequency or
+speaker playback. The existing SIO firmware/buffers remain resident and the
+successful muted-DMA handoff remains available. The next stage must own this
+clock region alongside the amp reset/keepalive and checked I2C lifecycle.

@@ -7,7 +7,7 @@ AppleARMIISSwitch graph router, clock ownership or board playback sequencing.
 import argparse,hashlib,importlib.util,pathlib,struct,subprocess
 from unicorn import Uc, UcError, UC_ARCH_ARM64, UC_MODE_ARM, UC_HOOK_CODE, UC_HOOK_MEM_WRITE
 from unicorn.arm64_const import UC_ARM64_REG_X0,UC_ARM64_REG_X1,UC_ARM64_REG_X2,UC_ARM64_REG_X3,UC_ARM64_REG_X4,UC_ARM64_REG_X5,UC_ARM64_REG_X6,UC_ARM64_REG_X7,UC_ARM64_REG_X30,UC_ARM64_REG_SP,UC_ARM64_REG_PC
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('kernelcache',type=pathlib.Path);p.add_argument('--backend',type=pathlib.Path,required=True);args=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('kernelcache',type=pathlib.Path);p.add_argument('--amp-clock-model',action='store_true');p.add_argument('--backend',type=pathlib.Path,required=True);args=p.parse_args()
 assert hashlib.sha256(args.kernelcache.read_bytes()).hexdigest()=='d173a651d02329a02d2f23c2859e1e54308a5e94da86ba729777efeb3503da08'
 root=pathlib.Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('prelink',root/'research/read-prelink.py');helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
@@ -68,13 +68,14 @@ def fresh():
  uc.mem_write(desc,struct.pack('<III',0x61756431,0x70696e31,0x00330303))
  return obj,route
 actual={}
-for value in (1,2):
+for value in ((1,2,0x21,0x22) if args.amp_clock_model else (1,2)):
  obj,route=fresh();writes.clear()
  assert call(0x7d6347c,route,0,0)==0
  default=[v for _,_,v in writes[-20:]]
  writes.clear();assert call(0x7d6347c,route,2,value)==0
  active=[v for _,_,v in writes[-20:]]
- actual['tx'+str(value-1)]=active
+ if value in (1,2):actual['tx'+str(value-1)]=active
+ else:assert active==actual['tx'+str((value&3)-1)],'MCLK flag changed the audited TX route unexpectedly'
  assert len(writes)==20 and any(a!=b for a,b in zip(default,active))
  writes.clear();assert call(0x7d6347c,route,0,0)==0
  stopped=[v for _,_,v in writes[-20:]]
