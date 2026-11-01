@@ -38,9 +38,15 @@ for(unsigned bytes=0;bytes<=PERIOD;++bytes){
  messages[1]=msg(0x68,3,128,bytes);messages[2]=msg(0x68,2,128,(u32)-32);
  assert(stop_dma()==0&&pending_slots==0&&pos==3);
 }
-pending_slots=1;pos=0;count=1;messages[0]=msg(0x68,2,128,PERIOD+1);
+/* STOP data is opaque: upstream retires the request, not an audio period. */
+const u32 opaque[]={PERIOD+1,(u32)-5,(u32)-32,(u32)-64,0x80000000U,0xffffffffU};
+for(unsigned i=0;i<sizeof(opaque)/sizeof(opaque[0]);++i){
+ pending_slots=1;pos=0;count=2;messages[0]=msg(0x65,15,0,8);
+ messages[1]=msg(0x68,2,128,opaque[i]);assert(stop_dma()==0&&pending_slots==0);
+}
+pending_slots=1;pos=0;count=1;messages[0]=msg(0x66,2,128,0);
 assert(stop_dma()==-EPROTO&&pending_slots==1);
-pending_slots=1;pos=0;count=1;messages[0]=msg(0x68,2,128,(u32)-5);
+pending_slots=1;pos=0;count=1;messages[0]=msg(0x6a,2,128,0);
 assert(stop_dma()==-EPROTO&&pending_slots==1);
 /* Idle tags are meaningless, including tags outside the descriptor set. */
 for(unsigned t=0;t<256;++t){

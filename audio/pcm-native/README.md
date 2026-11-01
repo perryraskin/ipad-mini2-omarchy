@@ -87,3 +87,17 @@ stop routine passes tests with both event orders, missing completions and unowne
 tags. These fixes build successfully but await fresh-boot hardware qualification;
 the diagnostic worker fault means the current boot must not be reused. No forced
 handoff, firmware reload or internal-storage write is part of recovery.
+
+## STOP retirement follow-up
+
+Fresh isolated boot with0e9f205 passed prepare-close,1s drain,1s drop,1s
+restart/drain and2s drop. A10s transfer wrote all480000frames but cleanup rejected
+tagged completion data0xffffffc0. This is not established to be Linux errno-64.
+Orchard apple_sio_dispatch assigns success from expected opcode, not response
+data; sio_dma_block_done retires inflight requests during stopping without
+interpreting response data. The revised STOP handler follows those semantics:
+require endpoint42, tagged0x68, owned pending tag and STOP ACK; data does not
+count played frames or determine retirement. receive still rejects error
+opcodes0x66/0x6a. Normal playback still requires exactly4096bytes per completion.
+Host tests cover opaque STOP data, pending ownership, missing ACK/completions and
+error opcodes. Live qualification of this revision remains pending.

@@ -102,3 +102,9 @@ valid partial completion (80 bytes) rejected by STOP cleanup. The handler now
 accepts bounded partial byte counts for owned descriptors, with exhaustive host
 coverage of0..4096; overflow/unknown error codes still fail. This correction is
 build-tested only; fresh-boot drop/restart and audible/volume tests remain.
+
+Next isolated boot passed drain/drop/restart, but the10s drain hit completion
+data0xffffffc0 during cleanup. Revised STOP request retirement now follows
+Orchard opcode/tag semantics rather than interpreting response data as errno;
+normal playback still validates full periods. This latest revision needs live
+qualification; do not reuse the poisoned owner or call audio finished.
