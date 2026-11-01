@@ -42,6 +42,7 @@ def visibility_patch(text):
 
 def patch(text):
  text=visibility_patch(text)
+ text=text.replace('text: row.isFailed ? Commons.I18n.t("network.wrongPassword") : Commons.I18n.t("network.connecting")', 'text: row.isFailed ? (root.failureReason || Commons.I18n.t("network.failed")) : Commons.I18n.t("network.connecting")')
  if '// J86 finger-sized Wi-Fi panel' in text:return text
  edits={
   'contentWidth: panel.fittedContentWidth(Style.space(380))':'contentWidth: panel.fittedContentWidth(Style.space(600))',
