@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/input.h>
 static int set_control(snd_ctl_t *ctl,const char *name,long value)
 {
  snd_ctl_elem_value_t *v;snd_ctl_elem_value_alloca(&v);
@@ -34,8 +38,17 @@ int main(int argc,char **argv)
  unsigned int pos=0,total;short samples[2048];
  int volume_check=argc>1&&!strcmp(argv[1],"--volume-check");
  int left=argc>1&&!strcmp(argv[1],"--left"),right=argc>1&&!strcmp(argv[1],"--right");
- int volume_stage=-1;
- tone=tone||volume_check||left||right;
+ int volume_stage=-1,keys=argc>1&&!strcmp(argv[1],"--volume-keys"),keyfd=-1,key_volume=40;
+ if(keys){
+  char name[64]={0};struct input_id id;
+  if(argc!=3||strncmp(argv[2],"/dev/input/event",16))return 2;
+  keyfd=open(argv[2],O_RDONLY|O_NONBLOCK|O_CLOEXEC);
+  if(keyfd<0)return 2;
+  if(ioctl(keyfd,EVIOCGNAME(sizeof(name)),name)<0||strcmp(name,"gpio-keys")||
+     ioctl(keyfd,EVIOCGID,&id)<0||id.bustype!=BUS_HOST||id.vendor!=1||id.product!=1){close(keyfd);return 2;}
+  seconds=10;
+ }
+ tone=tone||volume_check||left||right||keys;
  if(volume_check)seconds=6;
  int prepare_only=argc>1&&!strcmp(argv[1],"--prepare-close");
  int drop=argc>1&&!strcmp(argv[1],"--drop");
@@ -44,7 +57,7 @@ int main(int argc,char **argv)
  total=seconds*48000;
  if((rc=snd_ctl_open(&ctl,"j86",0))<0)goto out;
  if((rc=set_control(ctl,"Speaker Playback Switch",0))<0)goto out;
- if((rc=set_control(ctl,"Speaker Playback Volume",volume_check?40:60))<0)goto out;
+ if((rc=set_control(ctl,"Speaker Playback Volume",(volume_check||keys)?40:60))<0)goto out;
  if((rc=snd_pcm_open(&pcm,"j86",SND_PCM_STREAM_PLAYBACK,0))<0)goto out;
  snd_pcm_hw_params_alloca(&h);snd_pcm_hw_params_any(pcm,h);
  #define SET(x) do{rc=(x);if(rc<0)goto out;}while(0)
@@ -60,6 +73,18 @@ int main(int argc,char **argv)
  if(prepare_only){rc=0;goto out;}
  if(tone)SET(set_control(ctl,"Speaker Playback Switch",1));
  while(pos<total){
+  if(keys){
+   struct input_event ev;ssize_t nr;
+   while((nr=read(keyfd,&ev,sizeof(ev)))==(ssize_t)sizeof(ev)){
+    if(ev.type!=EV_KEY||ev.value!=1||(ev.code!=KEY_VOLUMEUP&&ev.code!=KEY_VOLUMEDOWN))continue;
+    key_volume+=ev.code==KEY_VOLUMEUP?5:-5;
+    if(key_volume<0)key_volume=0;
+    if(key_volume>60)key_volume=60;
+    SET(set_control(ctl,"Speaker Playback Volume",key_volume));
+    printf("VOLUME_KEY code=%u level=%d dB=%d\n",ev.code,key_volume,key_volume-60);fflush(stdout);
+   }
+   if(nr>=0||(errno!=EAGAIN&&errno!=EWOULDBLOCK)){rc=-EIO;goto out;}
+  }
   if(volume_check){
    int stage=pos/96000;
    if(stage!=volume_stage){
@@ -82,6 +107,7 @@ int main(int argc,char **argv)
  }
  if(drop)SET(snd_pcm_drop(pcm));else SET(snd_pcm_drain(pcm));rc=0;
 out:
+ if(keyfd>=0)close(keyfd);
  if(ctl)set_control(ctl,"Speaker Playback Switch",0);
  if(pcm){int close_rc=snd_pcm_close(pcm);if(rc>=0&&close_rc<0)rc=close_rc;}
  if(rc>=0)rc=kernel_result();

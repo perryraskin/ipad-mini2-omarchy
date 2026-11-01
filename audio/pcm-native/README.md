@@ -118,3 +118,18 @@ The host-built exerciser additionally supports `--left`, `--right` (bounded
 channel tests) and `--volume-check` (six seconds: two at-20dB, two at0dB, two
 muted, with the same peak1000 waveform). Mixer writes are read back and checked.
 These options do not enable services or change persistent defaults.
+
+## Volume evidence and pending key check
+
+Perry confirmed the six-second mixer test became louder. A bounded private
+read-only observer independently saw both amplifiers' register0x10 change from
+0xd8 to0x00 to0x19 during the soft/louder/muted phases; every active-phase I2C
+read succeeded. All tests stopped cleanly. Acoustic mute and channel separation
+still await explicit owner confirmation. Left-only and right-only2s playback
+completed with result0, bringing the session to12starts/12stops.
+
+`--volume-keys /dev/input/eventN` is a separate opt-in10s listening test. It
+requires the exact gpio-keys name and BUS_HOST/vendor1/product1 identity, starts
+at-20dB, and handles only press events for volume up/down in5dB steps capped
+at0dB. It neither handles power nor writes brightness. It is build-tested and
+staged, not physically qualified; it is not the desktop PipeWire key service.

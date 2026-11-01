@@ -112,3 +112,9 @@ data0xffffffc0 during cleanup. Revised STOP request retirement now follows
 Orchard opcode/tag semantics rather than interpreting response data as errno;
 normal playback still validates full periods. This latest revision needs live
 qualification; do not reuse the poisoned owner or call audio finished.
+
+Latest isolated audio checkpoint: audible volume increase confirmed by Perry;
+both amplifier volume registers independently observed changing. Left-only/right-
+only playback passed mechanically,12starts/12stops; acoustic separation/mute
+confirmation remains pending. The opt-in bounded physical-key helper is staged
+and awaits owner interaction. Desktop/PipeWire coexistence remains unqualified.
