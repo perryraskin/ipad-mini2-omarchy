@@ -94,3 +94,7 @@ now gates exact-device Labwc sendEventsMode while retaining touch scanning.
 The configuration helper preserves touch calibration and other devices in
 tests. Perry physically confirmed dragging still works immediately after off/wake with this change; this is
 not platform suspend or reduced touch-controller power.
+
+Perry physically confirmed Terminal corner resizing after touch recovery.
+Title-bar dragging and resizing, long-press, minimized-window restoration,
+and touch after screen blank/wake now have separate physical confirmations.

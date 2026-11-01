@@ -1,6 +1,6 @@
 {
   "BUILDING.md": "fa6f2160aece61e0115834960edab8e32d702238ad732ea5c0c0ba8aa9a0e2d7",
-  "HANDS-ON-QUEUE.md": "242443e2d486d4da866bc33b9cfc7492e51f74cd2a67e5d159d708d18ebdb27b",
+  "HANDS-ON-QUEUE.md": "6c5ef4414ca9dc79ccbce89c4ad7b0d57b66cf026e75e915db45b6f189a26b77",
   "HARDWARE.md": "e3c559ff5611aa4e7e08668872b9868d522aa1d28566a3ea27729902a6562e46",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
   "README.md": "41271398de005c667f6d3f0eccfbf169602dd1a217fc025269451684c4cbfe6f",
@@ -42,7 +42,7 @@
   "desktop/build.sh": "f6d37c9a0a5e482d61638812c7a1e6e52c860976d3afd56d717397f023bce1ae",
   "desktop/build/j86-sysroot.ini": "37458be8980312bce92465397568967ff6dd53bad840a2eea711cd2990829dc1",
   "desktop/configure-session.py": "d35e470583a903819f9cd39992f96d4ce02df1584c0f7e6d07808b324ad478bc",
-  "desktop/docs/touch-controls.md": "8e4da6312cb530be27a589b774562469bcb07959ca2ef14cb02be037a28cbe77",
+  "desktop/docs/touch-controls.md": "312897a60ec2d4e8e9f8dc068b3f76c20d990f45f0745d860d70803b3fcf071b",
   "desktop/firefox-user.js": "1b9254f053bba6232a708c79d0d6cc86eab4f873103dd8af15412db7e2db8b5f",
   "desktop/j86-apps": "411ba1ed57cfe4aeef04a473549710a53884cc0508e6a5a1dacd81fa9901a150",
   "desktop/j86-browser": "3ced4d87f4420fd0028e11864b3e26e106580a97fb1d1664abb672ee6bd3beec",
