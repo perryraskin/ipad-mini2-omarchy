@@ -53,5 +53,5 @@ firmware restart associated with screen wake. Another deliberate restart
 restored continuous motion and Perry confirmed the drag worked. Screen blanking
 now gates exact-device Labwc sendEventsMode while retaining touch scanning.
 The configuration helper preserves touch calibration and other devices in
-tests. Physical off/wake/drag retest of this change remains pending; this is
+tests. Perry physically confirmed dragging still works immediately after off/wake with this change; this is
 not platform suspend or reduced touch-controller power.

@@ -1,6 +1,6 @@
 {
   "BUILDING.md": "fa6f2160aece61e0115834960edab8e32d702238ad732ea5c0c0ba8aa9a0e2d7",
-  "HANDS-ON-QUEUE.md": "9f9611c5f0927d52a590fc1a1d3dc0724da54b8803937dcd6542f25e98eae121",
+  "HANDS-ON-QUEUE.md": "242443e2d486d4da866bc33b9cfc7492e51f74cd2a67e5d159d708d18ebdb27b",
   "HARDWARE.md": "e3c559ff5611aa4e7e08668872b9868d522aa1d28566a3ea27729902a6562e46",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
   "README.md": "41271398de005c667f6d3f0eccfbf169602dd1a217fc025269451684c4cbfe6f",
@@ -60,7 +60,7 @@
   "launch-desktop.sh": "315fe762012a209cb3e09493d189f35d2bdb36918174969e27cc86d6e494077d",
   "launch-vnc.sh": "8bff439bdf8201d00ec7943cc15fb5948f832deebd714db35c4b6643e8fa5fca",
   "network-command.py": "80f7b17b7f5a65b40be3d155289fe902cf30a3ba6f98bb8b484a5d9c1088a500",
-  "power/README.md": "2cd33340fba9739b0dff44c099b3f45fbba1935d9f899454dcf86a881d85f3db",
+  "power/README.md": "a345c0ccfe976c783a9513a7f3324b02ef6cd04bf6e0483186acced0831635a3",
   "power/build-receipt.json": "edb5d9e62425496078afbb4e931b7108c45e3ea8bd41e6e1eca5a603022b1d53",
   "power/prepare-suspend-kernel.sh": "79b74a04300c0cb10d2f8d51b27dc7528ff79cbd67aebc7b6db4800ff707fa6a",
   "power/suspend-preflight.py": "1c9908dd53b5f654ace2b6b24535a710846d3e4f3860266de1fdab154ec093f4",
