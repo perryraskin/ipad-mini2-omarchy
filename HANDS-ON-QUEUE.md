@@ -1,14 +1,41 @@
 # Ordered physical validation checklist
 
-**Audio resumed at Perry's explicit request.** The after-audio order remains HDMI,
-then Bluetooth/wired peripherals, then touch rotation, auto-rotation and suspend.
-Do not treat the later experiments as the next physical work.
+**Next: restore the working RAM desktop, then HDMI.** Speaker output and volume
+change are confirmed; remaining audio integration stays queued. The peripheral
+order remains HDMI, Bluetooth/wired input, touch rotation, auto-rotation, suspend.
 
 Never restore, repartition, flash, erase or install to iPad internal storage.
 Candidate code remains opt-in. Builds and host tests are not hardware qualification.
 Stop on unexpected output and retain diagnostics before advancing.
 
-## Remaining physical work, in order
+## Next return to the iPad (6 November update)
+
+No iPad actions were taken during this offline update. See [A7 progress and
+storage gates](research/A7-UPDATE-2026-11-06.md) and [roadmap](ROADMAP.md).
+
+1. Connect the known-working USB-A-to-Lightning cable to the Mac. Keep it attached
+   while the host inspects USB mode and the current kernel/boot identity.
+2. If still in isolated audio or back in iOS, enter DFU: hold Home + Power for
+   about 8 seconds, release Power and hold Home about 10 seconds, then release.
+   The screen stays black; the host must verify DFU identity before upload.
+   An Apple logo or cable icon means stop and report the mode, not repeat uploads.
+3. From the prepared private workspace run `./ipad-linux --profile known-good start`.
+   This uses current source tooling with the existing qualified RAM payload,
+   not a newly qualified kernel or a public source-only download. Reconnect
+   Lightning without pressing buttons only when the loader prompts for it.
+   If already running a healthy compatible desktop, skip DFU and reuse it.
+4. Confirm Home opens the menu, Terminal responds and brightness works. Keep the
+   cable connected. Do not load isolated audio alongside touch/Wi-Fi. Then proceed
+   to HDMI, Bluetooth/wired input, orientation, auto-rotation and suspend below.
+
+Audio's audible output and changing volume are already confirmed. Remaining audio
+integration tests stay queued; they do not force another isolated audio session
+before restoring the desktop or preparing HDMI. Internal storage is a separate
+future opt-in: backup first; explicit approval before snapshot deletion, resize,
+partition edits, write tests, formatting or installation. No such step is included
+in this physical sequence.
+
+## Detailed physical checks, in order
 
 1. **Finish audio.** The public a8c6a0e driver passed isolated prepare-close,
    drain/drop/restart,10s muted playback and another restart. Perry confirmed

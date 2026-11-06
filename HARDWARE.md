@@ -218,3 +218,10 @@ but its stop fix is not live-qualified. This supersedes earlier statements that
 no audible or ALSA playback had been confirmed. Desktop/app audio, physical volume
 keys, channel separation and sustained playback remain unqualified. See
 [audio/pcm-native/README.md](audio/pcm-native/README.md). No internal storage touched.
+
+## 6 November A7 storage checkpoint
+
+[Source-checked community update](research/A7-UPDATE-2026-11-06.md) distinguishes
+Cam's reported internal-root success from the older published ASP observer.
+No J86 storage/GPU hardware result changed in this offline checkpoint. The new
+host-only root-identity audit does not load a driver or authorize installation.

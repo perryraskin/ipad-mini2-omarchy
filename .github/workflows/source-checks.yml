@@ -47,3 +47,4 @@ jobs:
       - run: python audio/pcm-native/tests/work-stop.py
       - run: cc -Wall -Wextra -Werror audio/pcm-native/mixer-control.c -lasound -o /tmp/j86-mixer-control
       - run: sh -n audio/pipewire/session.sh
+      - run: python storage/tests/root-identity.py

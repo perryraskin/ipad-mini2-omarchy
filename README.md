@@ -4,6 +4,12 @@ Experimental source companion for a tethered Omarchy A RAM desktop on
 **iPad4,5 / J86AP (A7), 4 KiB pages**. This is not a standalone installer or a
 complete daily-use port. It does not install to iPad internal storage.
 
+**6 November:** J72 internal-root progress makes an A7 storage path plausible,
+but Mini 2 internal installation remains unqualified and disabled. See the
+[verified community update](research/A7-UPDATE-2026-11-06.md), [roadmap](ROADMAP.md)
+and [ordered iPad steps](HANDS-ON-QUEUE.md). RAM boot stays the default; APFS
+resizing/snapshot deletion requires a verified backup and explicit approval.
+
 Verified in a running Hoolock 7.0.12/Pomme session:
 
 - Native N1 touch: owner-confirmed aligned app taps; reversible stop/restart.
