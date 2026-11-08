@@ -8,10 +8,14 @@ Never restore, repartition, flash, erase or install to iPad internal storage.
 Candidate code remains opt-in. Builds and host tests are not hardware qualification.
 Stop on unexpected output and retain diagnostics before advancing.
 
-## Next return to the iPad (6 November update)
+## Next return to the iPad (7 November update)
 
-No iPad actions were taken during this offline update. See [A7 progress and
-storage gates](research/A7-UPDATE-2026-11-06.md) and [roadmap](ROADMAP.md).
+No iPad actions were taken during this offline update. See [new J72 replication
+material](research/A7-UPDATE-2026-11-07.md), [storage gates](research/A7-UPDATE-2026-11-06.md)
+and [roadmap](ROADMAP.md). J72 speakers, battery, guarded charging and USB
+reconnect are community Air 1 results, not new J86 qualifications. Do not copy
+its charging current, auto-enable audio or unplug the Mac-backed root on that
+evidence. Fresh-boot audio and charging under load remain open even on J72.
 
 1. Connect the known-working USB-A-to-Lightning cable to the Mac. Keep it attached
    while the host inspects USB mode and the current kernel/boot identity.

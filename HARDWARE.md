@@ -225,3 +225,12 @@ keys, channel separation and sustained playback remain unqualified. See
 Cam's reported internal-root success from the older published ASP observer.
 No J86 storage/GPU hardware result changed in this offline checkpoint. The new
 host-only root-identity audit does not load a driver or authorize installation.
+
+## 7 November replication/source checkpoint
+
+The [J72 guide and source review](research/A7-UPDATE-2026-11-07.md) adds pinned
+MCA-v1/SmartIO, gauge, charging supervisor, Wi-Fi ordering and recovery/storage
+references. J72 speaker/PipeWire, battery, guarded charging and same-boot source
+reconnect reports do not change this board's support status. The J72 7.3 modules
+are incompatible with our 7.0.12 ABI; no code or runtime setting was imported.
+Charging under browser load and fresh-boot audio remain open on J72 itself.

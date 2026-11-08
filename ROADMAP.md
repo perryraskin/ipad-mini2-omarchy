@@ -1,6 +1,7 @@
 # Mini 2 roadmap
 
-Updated 6 November 2026. [Community evidence and ASP/UUID analysis](research/A7-UPDATE-2026-11-06.md).
+Updated 7 November 2026. [New replication/source review](research/A7-UPDATE-2026-11-07.md)
+and [ASP/UUID analysis](research/A7-UPDATE-2026-11-06.md). Physical order is unchanged.
 
 1. **Restore the known-good RAM desktop.** Inspect actual USB state first. If the
    isolated audio owner remains loaded, a fresh RAM boot is needed before touch
@@ -15,9 +16,12 @@ Updated 6 November 2026. [Community evidence and ASP/UUID analysis](research/A7-
    29 muted app/cleanup cycles passed. The subsequent queued-stop source fix is
    host-tested only. Physical keys, acoustic mute/channel separation and combined
    desktop/touch/Wi-Fi ownership remain separate checks, not reasons to silently
-   start the isolated audio owner inside the working desktop.
+   start the isolated audio owner inside the working desktop. Compare the newly
+   published J72 MCA-v1/SmartIO and guarded runtime source before proposing a
+   native J86 integration; six-command J72 setup is not our eight-command path.
 5. **Internal-root research, disabled by default.** J72 internal-root reports make
-   A7 storage plausible. Obtain the actual UUID-link/writable-ASP source; audit
+   A7 storage plausible. Review the now-published J72 writable-ASP/recovery
+   snapshots and independently establish the UUID-link fix; audit
    J86 firmware/DT/geometry and early-root resolution. Host-only identity checks
    are available now. A read-only hardware observer needs a separately reviewed
    candidate and recovery plan; it is not bundled into default boot.
@@ -26,3 +30,8 @@ Updated 6 November 2026. [Community evidence and ASP/UUID analysis](research/A7-
    Snapshot deletion/APFS resize/GPT edits/format/install are not authorized by
    this roadmap. Internal-root boot, charging and host-free startup are separate
    milestones. No Mini 2 installer or qualified GPU acceleration is claimed.
+
+Community battery, guarded charging and USB reconnect code is now available for
+review. J86 behavior remains unqualified; no charging profile, current limit or
+autostart is copied. The J72 browser-load watchdog failure and stale readings
+must inform future tests. These references do not reorder the physical queue.
