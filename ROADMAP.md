@@ -1,6 +1,6 @@
 # Mini 2 roadmap
 
-Updated 7 November 2026. [New replication/source review](research/A7-UPDATE-2026-11-07.md)
+Updated 11 November 2026. [Orchard/Omarchy v0.3.0 review](research/A7-UPDATE-2026-11-11.md). [New replication/source review](research/A7-UPDATE-2026-11-07.md)
 and [ASP/UUID analysis](research/A7-UPDATE-2026-11-06.md). Physical order is unchanged.
 
 1. **Restore the known-good RAM desktop.** Inspect actual USB state first. If the
@@ -35,3 +35,13 @@ Community battery, guarded charging and USB reconnect code is now available for
 review. J86 behavior remains unqualified; no charging profile, current limit or
 autostart is copied. The J72 browser-load watchdog failure and stale readings
 must inform future tests. These references do not reorder the physical queue.
+
+Orchard v0.3.0 adds an exact-J86 experimental catalog/kernel target and a
+preferred checkra1n entry, not a qualified RAM payload. A future port must pin
+the checkout/catalog, preserve 4 KiB pages and private-input gates, build from
+clean sources and qualify USB/desktop/touch before replacing known-good.
+J85m/J86m/J87m are Mini 3. Generic suspend is source-level only on A7; audit
+power domains, cpuidle and freezable pollers in a separate RAM candidate, last
+in the hands-on order. Do not adopt Omarchy's idle-suspend policy. Installed
+m1n1 boot entries do not solve A7 storage and require separately authorized
+internal writes to create. No boot profile changes are warranted by this review.

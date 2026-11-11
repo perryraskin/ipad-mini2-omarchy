@@ -8,6 +8,25 @@ Never restore, repartition, flash, erase or install to iPad internal storage.
 Candidate code remains opt-in. Builds and host tests are not hardware qualification.
 Stop on unexpected output and retain diagnostics before advancing.
 
+## Release review gate (11 November 2026)
+
+The [v0.3.0 source review](research/A7-UPDATE-2026-11-11.md) was offline only.
+For the next qualification session, inspect USB identity, then arrange one fresh
+DFU RAM boot with the existing `known-good` payload and confirm the desktop.
+Do not replace it with Orchard's experimental J86 image or Mini 3 m-suffix
+profiles, enable generic suspend, or use install/launch to follow release notes.
+The older healthy-session reuse option below is not a fresh-boot validation.
+
+Keep HDMI before Bluetooth, then orientation/auto-rotate/suspend. Before removing
+the host cable for HDMI, qualify a self-contained RAM root and detach Mac NBD/app
+storage. Suspend is last, on a separate self-contained RAM candidate; use staged
+pm_test checks and the guide's boot-ID/wake-IRQ/timekeeping evidence. Untested
+boards can reboot or fail to wake. Keep automatic sleep disabled.
+
+All internal-storage writes, including creating m1n1 boot entries, still need
+Perry's explicit yes plus verified backup and a reviewed plan. Nothing here
+authorizes those writes. No device was inspected or touched for this update.
+
 ## Next return to the iPad (7 November update)
 
 No iPad actions were taken during this offline update. See [new J72 replication

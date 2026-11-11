@@ -4,6 +4,12 @@ Experimental source companion for a tethered Omarchy A RAM desktop on
 **iPad4,5 / J86AP (A7), 4 KiB pages**. This is not a standalone installer or a
 complete daily-use port. It does not install to iPad internal storage.
 
+**11 November:** Orchard and Omarchy A v0.3.0 are reviewed in the
+[dated release note](research/A7-UPDATE-2026-11-11.md). Experimental A7 board
+entries, standalone checkra1n and generic suspend are porting references, not
+qualified J86 upgrades. J85m/J86m/J87m are Mini 3 boards. Keep the known-good
+4 KiB RAM payload and power policy unchanged; no device was accessed.
+
 **7 November:** J72 now publishes a replication guide and pinned audio, battery,
 charging, Wi-Fi and storage source. These are Air 1 references, not tested Mini 2
 features; see the [new source review](research/A7-UPDATE-2026-11-07.md).

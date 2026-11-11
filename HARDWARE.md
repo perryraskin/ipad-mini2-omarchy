@@ -3,6 +3,21 @@
 Only iPad4,5/J86AP is tested. The mini2 Wi-Fi J85, mini3, Air J72, A5 and later
 Apple chips are not interchangeable device profiles.
 
+## Orchard v0.3.0 boundary (11 November)
+
+Orchard now describes J86/iPad4,5 in apple-4k with an experimental DTB and a
+preferred checkra1n entry. Its own touch, Wi-Fi, audio, battery/charging and
+storage states remain missing; USB, display and suspend/resume are untested.
+Our separate RAM results do not qualify that producer. J85 is Mini 2 Wi-Fi,
+not Air; J85m/J86m/J87m are Mini 3, not alternative Mini 2 profiles.
+See the [pinned release/source review](research/A7-UPDATE-2026-11-11.md).
+
+Generic S5L8960X s2idle code is now upstream in Orchard, but no J86 wake result
+is supplied. The known-good kernel still lacks CONFIG_SUSPEND; suspend1 remains
+unbooted. Keep screen-off only, no automatic suspend. A10 GPU/video/AOP rotation,
+other-board Bluetooth and installed m1n1 boot entries are not J86 features.
+No defaults or runtime sources changed during this offline review.
+
 ## Touch
 
 SPI1 at 0x20a084000, IRQ137; CS71/reset23/attention15/display-sync119.
