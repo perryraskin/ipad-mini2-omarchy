@@ -182,3 +182,5 @@ opt-in RAM-only control with identity/PID guards. A newly found queued-worker
 stop race is fixed and regression-tested in source only; current live PCM remains
 a8c6a0e. Add immediate-stop timing qualification to the next planned RAM boot,
 not this no-reboot session. Audible app output and physical key checks remain.
+
+See the [2026-11-24 upstream install status](docs/STATUS.md#2026-11-24-orchard-main-adds-ipad-mini-2-wi-fi-install).

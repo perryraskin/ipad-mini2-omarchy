@@ -45,3 +45,5 @@ power domains, cpuidle and freezable pollers in a separate RAM candidate, last
 in the hands-on order. Do not adopt Omarchy's idle-suspend policy. Installed
 m1n1 boot entries do not solve A7 storage and require separately authorized
 internal writes to create. No boot profile changes are warranted by this review.
+
+See the [2026-11-24 upstream install status](docs/STATUS.md#2026-11-24-orchard-main-adds-ipad-mini-2-wi-fi-install).

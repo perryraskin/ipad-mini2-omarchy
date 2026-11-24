@@ -1,0 +1,19 @@
+# Status
+
+## 2026-11-24: Orchard main adds iPad mini 2 (Wi-Fi) install
+
+Documentation-only upstream assessment; our known-good RAM boot profile and runtime remain unchanged. **Our ping bar is not met:** every cold boot is tethered, J86 remains untested upstream, and desktop GPU support is missing.
+
+Henrik Klee's [cdadc84](https://github.com/OrchardLinux/orchard/commit/cdadc848e27fc38903b372efa7805981f71e59d4), dated November 24 in UTC (November 25 in the author's +0800 timezone), records “devices: iPad Air and iPad mini 2 (Wi-Fi) install” and ricktav's daily installed Omarchy A use on J85. Related landed merges cover [#221: A7 storage writes across sleep](https://github.com/OrchardLinux/orchard/commit/2aee9cf7ccd4faad01625f329d2866f4dd92c156), [#222: charging up to 1.5 A](https://github.com/OrchardLinux/orchard/commit/4a1c6796da2051a87e217602cadc87ab44e5f3dd), and [#223: shared CS35L19 speaker support for Mini 2/3](https://github.com/OrchardLinux/orchard/commit/bd088562acdc76ce79a9a62eb47008f804f90b1b).
+
+The [J85 profile](https://github.com/OrchardLinux/orchard/blob/cdadc848e27fc38903b372efa7805981f71e59d4/devices/j85/device.toml) marks display (software framebuffer, 1536×2048), backlight, touch, buttons, storage reads/writes, Wi-Fi, battery, charging and charging control, suspend/resume, and USB serial/network working. Desktop GPU support is missing, so rendering is software. Audio output is untested with the landed shared driver; both speakers previously played with #223's earlier driver. Bluetooth, cellular, camera, accelerometer/rotation, microphone/headphone-jack support, screen-off and USB host remain missing; HDMI is not listed.
+
+Our [J86 cellular profile](https://github.com/OrchardLinux/orchard/blob/cdadc848e27fc38903b372efa7805981f71e59d4/devices/j86/device.toml) has no tester: supported feature entries are untested, while other entries are missing (not literally every feature is untested). The [compatibility catalog](https://github.com/OrchardLinux/orchard/blob/cdadc848e27fc38903b372efa7805981f71e59d4/docs/compatibility.md) describes experimental, untried support rather than a verified J86 installation. Henrik's assertion that it “shares all of it” is an inference from shared hardware, not a J86 test result.
+
+Boot uses checkm8-pongo: checkm8 from DFU, then PongoOS, then m1n1. Installation requires a DFU entry; every subsequent cold boot requires DFU and a Mac-hosted launch. [README step 5](https://github.com/OrchardLinux/omarchy-a/blob/ebe8f05c4d30c9953ee4fc3c2356f1dcf78feb46/README.md) and [boot architecture](https://github.com/OrchardLinux/omarchy-a/blob/ebe8f05c4d30c9953ee4fc3c2356f1dcf78feb46/docs/how-it-works.md) specify that every cold start goes through `orchard launch`. This is a tethered installation, not independent cold boot.
+
+The [storage design](https://github.com/OrchardLinux/omarchy-a/blob/ebe8f05c4d30c9953ee4fc3c2356f1dcf78feb46/docs/how-it-works.md) places a boot partition and root beside iPadOS. Resize APFS, using palera1n, separately frees space by shrinking the iPadOS container; the installer itself never touches APFS. Replacing an earlier Linux installation deletes that installation. This status note authorizes no installation or storage writes.
+
+As checked on 2026-11-24, [ipsw.me for iPad4,5](https://ipsw.me/iPad4,5) lists iOS 12.5.8 (16H88) as signed, providing a Finder restore path today; signing can change. [Omarchy A v0.3.4](https://github.com/OrchardLinux/omarchy-a/releases/tag/v0.3.4), published 2026-11-23, is the latest tagged release and predates these changes. Evaluating them would require main/nightly.
+
+[Henrik's maintainer request](https://github.com/OrchardLinux/orchard/pull/66#issuecomment-7138279929) asks Perry to evaluate current main and report one line each for touch, Wi-Fi, speakers, charging, and sleep/wake. Perry will reply himself. No device testing was performed for this update.

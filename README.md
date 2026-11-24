@@ -85,3 +85,5 @@ Touch protocol/SPI references: Cascadia commit
 Host-only A7 MCA register adaptation is documented in [audio/mca/README.md](audio/mca/README.md). The single ordered physical validation queue is [HANDS-ON-QUEUE.md](HANDS-ON-QUEUE.md). New experiments remain disabled; host checks do not qualify hardware.
 
 Explicit, inactive GitHub source-checkpoint updates are documented in [updates/README.md](updates/README.md). These update Mac-side sources with backups; they do not install an OS or activate a RAM build.
+
+See the [2026-11-24 upstream install status](docs/STATUS.md#2026-11-24-orchard-main-adds-ipad-mini-2-wi-fi-install).

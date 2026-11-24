@@ -1,10 +1,10 @@
 {
   "BUILDING.md": "ddbd7b5b8bcb1f0d405ee0f349297fae7ffe08664c46ddc501ff573f2f2f6242",
-  "HANDS-ON-QUEUE.md": "39d4f943f8da8d5cc351b2d3abcc086529214ad392d1ec71227a236ba5555417",
+  "HANDS-ON-QUEUE.md": "d4acdceed2ab9999878e1764c6d3afb85d5deda65a96fc295c42515398a69d94",
   "HARDWARE.md": "93d8b52b0767a26f08657189f83a72831f263295ea5b18b8d38bdac4f737eb7b",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
-  "README.md": "f505b3d7ef9fa39f9e9c5219c785a1580843ff9b542bb77885a80cd90f0057ab",
-  "ROADMAP.md": "183803f71089dc0ea0a29e35a38c27ef733efa493b0436c8aaea3fec89de8e3e",
+  "README.md": "68022b58ab9e0154b8824ba72948f6ef10ddfb296e89bbfd14051d563d58d2f5",
+  "ROADMAP.md": "c16e6da1fc25be4fbab9b7ab31832527e529dd11e4c7cd9a10317dec9245f069",
   "apps/README.md": "5a2310a5d3c66b7f49462e2c5eada1fa88d64c0f411a8084cdcec38fb144b05c",
   "apps/build-overlay.sh": "527ca4a800e6d60b3b8c8fa1b3c9da46d4871f200e86fa50c31ae87090e52098",
   "apps/configure-proxy.py": "dd6bc7865bbf3821631db74f6a0a6397f9d1842b806adef2277bec193e35a68f",
@@ -229,5 +229,6 @@
   "wifi/tools/derive-calibration.py": "1d9afdf573874e495a72137b176e7d7bbfcdf5572a9d30dfab7848e155269380",
   "wifi/tools/driver-bind-plan.py": "a54d1d8f47305c235348682cd88e40cce1d21136cbf4fa890e4a006d3a634f99",
   "wifi/tools/prepare-ram-firmware.py": "dafb530fadb29bcf7fcfb62ba2eb4310146b426e4f3a130af2a593c966b3cb27",
-  "wifi/tools/stage-driver-firmware.py": "9c661cbfd2c7e1ba2e6aea874db5f962e52cfe60ee4dcfe86366ae28bddb71b1"
+  "wifi/tools/stage-driver-firmware.py": "9c661cbfd2c7e1ba2e6aea874db5f962e52cfe60ee4dcfe86366ae28bddb71b1",
+  "docs/STATUS.md": "3783296d26070183e1484bac2fe38872ac61294e4810516d8ebf1c419262c474"
 }
