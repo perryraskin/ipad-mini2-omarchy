@@ -17,3 +17,5 @@ The [storage design](https://github.com/OrchardLinux/omarchy-a/blob/ebe8f05c4d30
 As checked on 2026-11-24, [ipsw.me for iPad4,5](https://ipsw.me/iPad4,5) lists iOS 12.5.8 (16H88) as signed, providing a Finder restore path today; signing can change. [Omarchy A v0.3.4](https://github.com/OrchardLinux/omarchy-a/releases/tag/v0.3.4), published 2026-11-23, is the latest tagged release and predates these changes. Evaluating them would require main/nightly.
 
 [Henrik's maintainer request](https://github.com/OrchardLinux/orchard/pull/66#issuecomment-7138279929) asks Perry to evaluate current main and report one line each for touch, Wi-Fi, speakers, charging, and sleep/wake. Perry will reply himself. No device testing was performed for this update.
+
+[Proposed J86 install test procedure — review only](INSTALL-from-orchard-main.md). Execution has not been approved.

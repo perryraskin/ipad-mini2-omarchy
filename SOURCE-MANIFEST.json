@@ -3,7 +3,7 @@
   "HANDS-ON-QUEUE.md": "d4acdceed2ab9999878e1764c6d3afb85d5deda65a96fc295c42515398a69d94",
   "HARDWARE.md": "93d8b52b0767a26f08657189f83a72831f263295ea5b18b8d38bdac4f737eb7b",
   "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
-  "README.md": "68022b58ab9e0154b8824ba72948f6ef10ddfb296e89bbfd14051d563d58d2f5",
+  "README.md": "ede02576c0e7bc518bd9e54bf9d4751b23ad6ac7685ab73629a3caf30586e8c6",
   "ROADMAP.md": "c16e6da1fc25be4fbab9b7ab31832527e529dd11e4c7cd9a10317dec9245f069",
   "apps/README.md": "5a2310a5d3c66b7f49462e2c5eada1fa88d64c0f411a8084cdcec38fb144b05c",
   "apps/build-overlay.sh": "527ca4a800e6d60b3b8c8fa1b3c9da46d4871f200e86fa50c31ae87090e52098",
@@ -230,5 +230,6 @@
   "wifi/tools/driver-bind-plan.py": "a54d1d8f47305c235348682cd88e40cce1d21136cbf4fa890e4a006d3a634f99",
   "wifi/tools/prepare-ram-firmware.py": "dafb530fadb29bcf7fcfb62ba2eb4310146b426e4f3a130af2a593c966b3cb27",
   "wifi/tools/stage-driver-firmware.py": "9c661cbfd2c7e1ba2e6aea874db5f962e52cfe60ee4dcfe86366ae28bddb71b1",
-  "docs/STATUS.md": "3783296d26070183e1484bac2fe38872ac61294e4810516d8ebf1c419262c474"
+  "docs/STATUS.md": "d0fa7b1aa062b131e77a1c2e4a081527cc24bd92174d740bf7e8a1099ff51841",
+  "docs/INSTALL-from-orchard-main.md": "f58426e0536feba5477aacb6a6fba84bd08a7fe0d8124bafa24edfbf19bd4642"
 }

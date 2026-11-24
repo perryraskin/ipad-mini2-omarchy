@@ -87,3 +87,5 @@ Host-only A7 MCA register adaptation is documented in [audio/mca/README.md](audi
 Explicit, inactive GitHub source-checkpoint updates are documented in [updates/README.md](updates/README.md). These update Mac-side sources with backups; they do not install an OS or activate a RAM build.
 
 See the [2026-11-24 upstream install status](docs/STATUS.md#2026-11-24-orchard-main-adds-ipad-mini-2-wi-fi-install).
+
+[Proposed J86 install test procedure — review only](docs/INSTALL-from-orchard-main.md). Execution has not been approved.
